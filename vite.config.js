@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  base: '/skill-share/',
+  base: '/Skill-Share/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
