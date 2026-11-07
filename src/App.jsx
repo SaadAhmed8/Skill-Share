@@ -73,7 +73,7 @@ function AppRoutes() {
 function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <ScrollToHash />
         {/* Skip to content */}
         <a

@@ -239,7 +239,7 @@ export function AuthCard({ initialTab = 'login', onAuthSuccess, showBecomeMentor
 
             {showDemoDetails && (
               <div className="pt-2 space-y-1.5 border-t border-[var(--line)] mt-2">
-                {users.slice(0, 3).map((u) => (
+                {users.slice(0, 4).map((u) => (
                   <button
                     key={u.id}
                     type="button"

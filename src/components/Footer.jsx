@@ -63,19 +63,19 @@ export function Footer() {
             <ul className="space-y-1.5 text-xs text-[var(--gray-400)]">
               <li className="flex justify-between items-center py-1 border-b border-white/10">
                 <span>Saad Ahmed</span>
-                <span className="text-[var(--green-400)] font-mono">CT-22089</span>
+                <span className="text-[var(--green-400)] font-mono">CT-25089</span>
               </li>
               <li className="flex justify-between items-center py-1 border-b border-white/10">
                 <span>Hasan Shahir</span>
-                <span className="text-[var(--green-400)] font-mono">CT-22095</span>
+                <span className="text-[var(--green-400)] font-mono">CT-25095</span>
               </li>
               <li className="flex justify-between items-center py-1 border-b border-white/10">
                 <span>Syeda Faiza Aslam</span>
-                <span className="text-[var(--green-400)] font-mono">CT-22064</span>
+                <span className="text-[var(--green-400)] font-mono">CT-25064</span>
               </li>
               <li className="flex justify-between items-center py-1">
                 <span>Mahreen</span>
-                <span className="text-[var(--green-400)] font-mono">CT-22069</span>
+                <span className="text-[var(--green-400)] font-mono">CT-25069</span>
               </li>
             </ul>
           </div>
