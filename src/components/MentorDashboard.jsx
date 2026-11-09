@@ -20,7 +20,7 @@ import {
 } from './SessionActionModals';
 import { CertificateModal } from './CertificateModal';
 import { useApp } from '../context/AppContext';
-import { getSubjectName } from '../lib/utils';
+import { getSubjectName, CERTIFICATE_MIN_HOURS } from '../lib/utils';
 import { toast } from 'sonner';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -138,18 +138,11 @@ export function MentorDashboard() {
       progress: completedSessions.length >= 1 ? 100 : (completedSessions.length / 1) * 100,
     },
     {
-      id: '10_hours',
-      title: '10 Hours Certified',
+      id: 'cert_hours',
+      title: `${CERTIFICATE_MIN_HOURS} Hours Certified`,
       desc: 'Eligible for official certificate',
-      unlocked: hours >= 10,
-      progress: Math.min(100, (hours / 10) * 100),
-    },
-    {
-      id: '50_hours',
-      title: '50 Hours Legend',
-      desc: 'Outstanding civics service',
-      unlocked: hours >= 50,
-      progress: Math.min(100, (hours / 50) * 100),
+      unlocked: hours >= CERTIFICATE_MIN_HOURS,
+      progress: Math.min(100, (hours / CERTIFICATE_MIN_HOURS) * 100),
     },
     {
       id: 'top_rated',
@@ -157,6 +150,13 @@ export function MentorDashboard() {
       desc: '4.8+ rating with 5+ reviews',
       unlocked: rating >= 4.8 && ratingCount >= 5,
       progress: ratingCount >= 5 ? 100 : (ratingCount / 5) * 100,
+    },
+    {
+      id: 'master_volunteer',
+      title: 'Civics Service Milestone',
+      desc: 'Active verified academic mentor',
+      unlocked: hours >= 1,
+      progress: Math.min(100, hours * 10),
     },
   ];
 
@@ -396,11 +396,10 @@ export function MentorDashboard() {
                         <button
                           type="button"
                           onClick={() => toggleSlot(day, slot)}
-                          className={`w-full py-2 px-3 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
-                            isChecked
+                          className={`w-full py-2 px-3 rounded-full text-xs font-bold border transition-colors cursor-pointer ${isChecked
                               ? 'bg-[var(--green-900)] text-white border-[var(--green-900)]'
                               : 'bg-white border-[var(--line)] text-[var(--gray-600)] hover:bg-[var(--snow)]'
-                          }`}
+                            }`}
                         >
                           {isChecked ? 'Available' : 'Unavailable'}
                         </button>
@@ -429,14 +428,10 @@ export function MentorDashboard() {
           <button
             type="button"
             onClick={() => setCertModalOpen(true)}
-            disabled={hours < 10}
-            className={`px-6 py-2.5 rounded-full text-xs font-bold cursor-pointer ${
-              hours >= 10
-                ? 'bg-[var(--green-400)] text-[var(--ink)] hover:bg-white'
-                : 'bg-white/10 text-white/40 cursor-not-allowed'
-            }`}
+            className="px-6 py-2.5 rounded-full text-xs font-bold cursor-pointer bg-[var(--green-400)] text-[var(--ink)] hover:bg-white transition-colors flex items-center gap-2"
           >
-            Download Certificate {hours < 10 ? '(Requires 10 hrs)' : ''}
+            <Certificate className="size-4" weight="bold" />
+            <span>Volunteer Certificate</span>
           </button>
         </div>
 
@@ -444,11 +439,10 @@ export function MentorDashboard() {
           {badges.map((b) => (
             <div
               key={b.id}
-              className={`p-5 rounded-[28px] border ${
-                b.unlocked
+              className={`p-5 rounded-[28px] border ${b.unlocked
                   ? 'bg-[#181818] border-[var(--green-400)]/40 text-white'
                   : 'bg-[#121212] border-white/10 text-white/50'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between mb-1">
                 <h3 className="font-bold text-xs text-white">{b.title}</h3>

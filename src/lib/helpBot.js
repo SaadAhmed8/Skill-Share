@@ -53,6 +53,12 @@ export const HELP_INTENTS = [
     actions: [{ label: 'Become a Mentor', path: '/auth?tab=mentor' }],
   },
   {
+    id: 'certificate',
+    keywords: ['certificate', 'volunteer certificate', 'hours certificate', 'sanad', 'recognition'],
+    answer: 'Mentors unlock an official Certificate of Appreciation once they reach 30 volunteer hours. You can print or save your PDF certificate directly from your Mentor Dashboard or profile.',
+    actions: [{ label: 'View Dashboard', path: '/dashboard' }],
+  },
+  {
     id: 'duration',
     keywords: ['how long', 'duration', 'time', 'length', 'hours', 'kitni der', 'online'],
     answer: 'Sessions are 1-on-1 and conducted online. The standard duration is 1 hour (minimum 60 minutes). Group sessions can also be arranged with up to 3 peers.',

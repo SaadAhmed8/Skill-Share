@@ -72,7 +72,7 @@ export const initialMentors = [
     responseTime: "< 15 mins",
     availability: ["Mon 6:00 - 8:00 PM", "Wed 7:00 - 9:00 PM", "Sat 2:00 - 5:00 PM"],
     avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
-    badges: ["Top Rated", "50h Club", "Algorithms Master"],
+    badges: ["Top Rated", "Gold Volunteer", "Algorithms Master"],
     isNew: false,
     suspended: false,
     resources: [
@@ -106,7 +106,7 @@ export const initialMentors = [
     status: "approved",
     rating: 4.88,
     ratingCount: 19,
-    hoursTaught: 34,
+    hoursTaught: 32,
     sessionsCount: 24,
     responseTime: "< 30 mins",
     availability: ["Tue 5:00 - 7:00 PM", "Thu 6:00 - 8:00 PM", "Sun 11:00 AM - 1:00 PM"],
@@ -162,7 +162,7 @@ export const initialMentors = [
     status: "approved",
     rating: 4.79,
     ratingCount: 14,
-    hoursTaught: 22,
+    hoursTaught: 15,
     sessionsCount: 18,
     responseTime: "< 45 mins",
     availability: ["Mon 3:00 - 5:00 PM", "Thu 4:00 - 6:00 PM"],
@@ -186,12 +186,12 @@ export const initialMentors = [
     status: "approved",
     rating: 4.97,
     ratingCount: 31,
-    hoursTaught: 56,
+    hoursTaught: 75,
     sessionsCount: 42,
     responseTime: "< 20 mins",
     availability: ["Tue 7:00 - 9:00 PM", "Sat 10:00 AM - 1:00 PM"],
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-    badges: ["Top Rated", "50h Club", "Database Guru"],
+    badges: ["Top Rated", "Silver Volunteer", "Database Guru"],
     isNew: false,
     suspended: false,
     resources: [],
@@ -856,3 +856,137 @@ export const featuredSubjects = [
     color: "#FFC400"
   }
 ];
+
+export const initialPlatformFeedback = [
+  {
+    id: "pf-1",
+    name: "Zainab Fatima",
+    role: "Student",
+    department: "Computer Science",
+    year: 2,
+    rating: 5,
+    comment: "Finding an experienced senior in my department was effortless. The platform made scheduling my first recursion session completely frictionless.",
+    date: "2026-10-18T14:20:00.000Z"
+  },
+  {
+    id: "pf-2",
+    name: "Hamza Siddiqui",
+    role: "Mentor",
+    department: "Software Engineering",
+    year: 3,
+    rating: 5,
+    comment: "I love that all appointments have a mandatory one hour minimum. It gives us enough time to actually solve problems instead of rushing through questions.",
+    date: "2026-10-22T16:00:00.000Z"
+  },
+  {
+    id: "pf-3",
+    name: "Bilal Ahmed",
+    role: "Student",
+    department: "Electrical Engineering",
+    year: 2,
+    rating: 5,
+    comment: "The built in help chat and automated email reminders kept everything organized. Best of all, all tutoring is genuinely 100% free.",
+    date: "2026-10-25T11:30:00.000Z"
+  },
+  {
+    id: "pf-4",
+    name: "Ayesha Khan",
+    role: "Mentor",
+    department: "Computer Science",
+    year: 4,
+    rating: 5,
+    comment: "Keeping student contact details private inside the platform chat gives both juniors and mentors complete peace of mind.",
+    date: "2026-10-27T09:15:00.000Z"
+  },
+  {
+    id: "pf-5",
+    name: "Mariam Tariq",
+    role: "Mentor",
+    department: "Applied Physics",
+    year: 4,
+    rating: 5,
+    comment: "The report button and clear code of conduct set professional boundaries right from day one. It creates a safe academic environment for everyone.",
+    date: "2026-10-29T18:40:00.000Z"
+  },
+  {
+    id: "pf-6",
+    name: "Farhan Jamil",
+    role: "Student",
+    department: "Mechanical Engineering",
+    year: 1,
+    rating: 4,
+    comment: "It would be great to see even more specialized engineering electives added to the subject filters soon, but the core subjects are already great.",
+    date: "2026-10-30T13:10:00.000Z"
+  },
+  {
+    id: "pf-7",
+    name: "Khadija Noor",
+    role: "Mentor",
+    department: "Computer Science",
+    year: 4,
+    rating: 5,
+    comment: "Volunteering hours count toward official community service certificates, which is a wonderful recognition for senior students giving back.",
+    date: "2026-11-01T15:25:00.000Z"
+  },
+  {
+    id: "pf-8",
+    name: "Hira Kazim",
+    role: "Student",
+    department: "Computer Systems",
+    year: 2,
+    rating: 5,
+    comment: "My calculus midterms went smoothly thanks to my mentor. The meeting links open directly inside Google Meet with no extra downloads.",
+    date: "2026-11-02T10:00:00.000Z"
+  },
+  {
+    id: "pf-9",
+    name: "Danial Farooq",
+    role: "Mentor",
+    department: "English & Humanities",
+    year: 3,
+    rating: 4,
+    comment: "Platform runs smoothly. An expanded selector for late evening weekend slots would help mentors who have late campus lab schedules.",
+    date: "2026-11-02T19:30:00.000Z"
+  },
+  {
+    id: "pf-10",
+    name: "Usman Ghani",
+    role: "Mentor",
+    department: "Electrical Engineering",
+    year: 4,
+    rating: 5,
+    comment: "The verification queue ensures only high achieving seniors can tutor. That preserves platform reputation and student trust.",
+    date: "2026-11-03T12:00:00.000Z"
+  },
+  {
+    id: "pf-11",
+    name: "Sana Anjum",
+    role: "Student",
+    department: "Software Engineering",
+    year: 1,
+    rating: 5,
+    comment: "The help bot answered all my questions about scheduling rules immediately. The whole experience feels tailored for NED students.",
+    date: "2026-11-03T17:15:00.000Z"
+  },
+  {
+    id: "pf-12",
+    name: "Taha Choudhry",
+    role: "Student",
+    department: "Civil Engineering",
+    year: 2,
+    rating: 5,
+    comment: "No hidden charges or tuition middleman fees. Just direct, honest help from verified seniors who took the exact same courses.",
+    date: "2026-11-04T08:45:00.000Z"
+  },
+  {
+    id: "pf-13",
+    name: "Zubair Shah",
+    role: "Student",
+    department: "Computer Science",
+    year: 2,
+    rating: 5,
+    comment: "Transparent rating and review counts on each mentor card made it easy to find someone with verified patient explanations.",
+    date: "2026-11-04T14:50:00.000Z"
+  }
+];
+

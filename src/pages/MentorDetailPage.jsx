@@ -10,21 +10,26 @@ import {
   Clock,
   Star,
   CheckCircle,
+  Certificate,
 } from '@phosphor-icons/react';
 import { SectionWrapper } from '../components/SectionWrapper';
 import { RequestSessionDialog } from '../components/RequestSessionDialog';
 import { ReportMentorDialog } from '../components/ReportMentorDialog';
+import { CertificateModal } from '../components/CertificateModal';
 import { useApp } from '../context/AppContext';
 import { getSubjectName } from '../lib/utils';
 import { toast } from 'sonner';
 
 export function MentorDetailPage() {
   const { id } = useParams();
-  const { getMentorById, getMentorReviews, getMentorSessions } = useApp();
+  const { currentUser, getMentorById, getMentorReviews, getMentorSessions, getMentorStats } = useApp();
 
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [certModalOpen, setCertModalOpen] = useState(false);
   const [selectedSlotForRequest, setSelectedSlotForRequest] = useState('');
+  const [reviewsVisibleCount, setReviewsVisibleCount] = useState(6);
+  const [reviewSort, setReviewSort] = useState('newest'); // 'newest' | 'highest' | 'lowest'
 
   const mentor = getMentorById(id);
 
@@ -52,6 +57,14 @@ export function MentorDetailPage() {
 
   const reviews = getMentorReviews(mentor.id);
   const completedSessions = getMentorSessions(mentor.id);
+  const mentorStats = getMentorStats ? getMentorStats(mentor.id) : null;
+
+  const totalReviews = reviews.length;
+  const ratingAverage = totalReviews > 0
+    ? Number((reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0) / totalReviews).toFixed(1))
+    : 0;
+  const volunteerHours = mentorStats ? mentorStats.hoursTaught : mentor.hoursTaught || 0;
+  const isNew = mentor.isNew || totalReviews === 0;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -63,11 +76,25 @@ export function MentorDetailPage() {
     setRequestDialogOpen(true);
   };
 
-  const totalReviews = reviews.length;
   const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   reviews.forEach((r) => {
-    if (ratingCounts[r.rating] !== undefined) ratingCounts[r.rating]++;
+    const star = Math.round(Number(r.rating) || 5);
+    if (ratingCounts[star] !== undefined) ratingCounts[star]++;
   });
+
+  // Sort reviews
+  const sortedReviews = [...reviews].sort((a, b) => {
+    if (reviewSort === 'highest') {
+      return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+    }
+    if (reviewSort === 'lowest') {
+      return (Number(a.rating) || 0) - (Number(b.rating) || 0);
+    }
+    // Newest
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const displayedReviews = sortedReviews.slice(0, reviewsVisibleCount);
 
   const initials = mentor.name.split(' ').map((n) => n[0]).join('').slice(0, 2);
 
@@ -89,6 +116,18 @@ export function MentorDetailPage() {
           </nav>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Certificate button: shown on the mentor's own profile (mentor only) */}
+            {currentUser?.id === mentor.userId && currentUser?.role === 'mentor' && (
+              <button
+                type="button"
+                onClick={() => setCertModalOpen(true)}
+                className="px-3.5 py-1.5 rounded-full border border-[var(--green-600)] bg-[var(--green-900)] text-white hover:bg-black text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <Certificate className="size-3.5" weight="bold" />
+                <span>Certificate</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleCopyLink}
@@ -123,14 +162,14 @@ export function MentorDetailPage() {
                 <span className="px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold">
                   Verified Senior Mentor
                 </span>
-                {mentor.isNew ? (
+                {isNew ? (
                   <span className="px-3 py-1 rounded-full bg-[var(--green-400)] text-[var(--ink)] text-xs font-bold uppercase">
-                    New
+                    New Mentor
                   </span>
                 ) : (
                   <div className="flex items-center gap-1.5 text-xs text-[var(--green-400)] font-bold">
                     <Star className="size-3.5" weight="fill" />
-                    <span>{mentor.rating.toFixed(1)} ({mentor.ratingCount} reviews)</span>
+                    <span>{ratingAverage.toFixed(1)} ({totalReviews} reviews)</span>
                   </div>
                 )}
               </div>
@@ -177,13 +216,13 @@ export function MentorDetailPage() {
           </div>
 
           <div className="pt-4 sm:pt-0">
-            <p className="font-bold text-4xl text-[var(--ink)]">{mentor.hoursTaught || 0}</p>
+            <p className="font-bold text-4xl text-[var(--ink)]">{volunteerHours}</p>
             <p className="text-xs uppercase tracking-wider font-semibold text-[var(--gray-600)] mt-1">Volunteer Hours</p>
           </div>
 
           <div className="pt-4 sm:pt-0">
             <p className="font-bold text-4xl text-[var(--ink)]">
-              {mentor.isNew ? 'New' : `${mentor.rating.toFixed(1)} ★`}
+              {isNew ? 'New' : `${ratingAverage.toFixed(1)} ★`}
             </p>
             <p className="text-xs uppercase tracking-wider font-semibold text-[var(--gray-600)] mt-1">Average Rating</p>
           </div>
@@ -273,40 +312,134 @@ export function MentorDetailPage() {
 
       {/* 5. RATINGS & REVIEWS (Snow Band) */}
       <SectionWrapper variant="light-alt" containerClassName="py-12">
-        <div className="max-w-3xl mb-8">
-          <span className="text-xs uppercase tracking-wider font-bold text-[var(--green-600)] block mb-1">
-            Student Feedback
-          </span>
-          <h2 className="font-bold text-2xl text-[var(--ink)]">
-            Ratings &amp; Reviews ({totalReviews})
-          </h2>
+        <div className="max-w-3xl mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-xs uppercase tracking-wider font-bold text-[var(--green-600)] block mb-1">
+              Student Feedback
+            </span>
+            <h2 className="font-bold text-2xl text-[var(--ink)]">
+              Ratings &amp; Reviews ({totalReviews})
+            </h2>
+          </div>
+
+          {totalReviews > 0 && (
+            <div className="flex items-center gap-2">
+              <label htmlFor="review-sort" className="text-xs font-semibold text-[var(--gray-600)]">
+                Sort:
+              </label>
+              <select
+                id="review-sort"
+                value={reviewSort}
+                onChange={(e) => {
+                  setReviewSort(e.target.value);
+                  setReviewsVisibleCount(6);
+                }}
+                className="bg-white border border-[var(--line)] rounded-full px-3 py-1.5 text-xs font-semibold text-[var(--ink)] outline-none"
+              >
+                <option value="newest">Newest</option>
+                <option value="highest">Highest</option>
+                <option value="lowest">Lowest</option>
+              </select>
+            </div>
+          )}
         </div>
 
-        {reviews.length > 0 ? (
-          <div className="divide-y divide-[var(--line)] bg-white border border-[var(--line)] rounded-[28px] p-6 sm:p-8">
-            {reviews.map((rev) => (
-              <div key={rev.id} className="py-4 first:pt-0 last:pb-0 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[var(--ink)]">{rev.studentName}</span>
-                    <span className="text-[var(--gray-600)]">• Verified Junior</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[var(--ink)]">★ {rev.rating}.0</span>
-                    <span className="text-[var(--gray-600)]">
-                      {new Date(rev.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
+        {totalReviews > 0 ? (
+          <div className="space-y-6">
+            {/* Rating breakdown summary & 5-1 distribution bars */}
+            <div className="bg-white border border-[var(--line)] rounded-[28px] p-6 sm:p-8 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <div className="md:col-span-4 text-center md:text-left border-b md:border-b-0 md:border-r border-[var(--line)] pb-4 md:pb-0 md:pr-6">
+                <p className="font-bold text-5xl text-[var(--ink)]">
+                  {ratingAverage.toFixed(1)}
+                </p>
+                <div className="flex items-center justify-center md:justify-start gap-1 text-[var(--green-600)] my-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className="size-4"
+                      weight={star <= Math.round(ratingAverage) ? 'fill' : 'regular'}
+                    />
+                  ))}
                 </div>
-                <p className="text-sm text-[var(--gray-600)] leading-relaxed italic">
-                  "{rev.comment}"
+                <p className="text-xs text-[var(--gray-600)]">
+                  Based on {totalReviews} verified review{totalReviews === 1 ? '' : 's'}
                 </p>
               </div>
-            ))}
+
+              <div className="md:col-span-8 space-y-2">
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = ratingCounts[star] || 0;
+                  const pct = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+                  return (
+                    <div key={star} className="flex items-center gap-3 text-xs">
+                      <span className="w-12 text-[var(--ink)] font-semibold flex items-center gap-1">
+                        <span>{star}</span>
+                        <Star className="size-3 text-[var(--ink)]" weight="fill" />
+                      </span>
+                      <div className="flex-1 h-2.5 bg-[var(--snow)] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[var(--ink)] transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="w-10 text-right text-[var(--gray-600)] font-mono text-[11px]">
+                        {count}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Reviews list */}
+            <div className="divide-y divide-[var(--line)] bg-white border border-[var(--line)] rounded-[28px] p-6 sm:p-8">
+              {displayedReviews.map((rev) => (
+                <div key={rev.id} className="py-4 first:pt-0 last:pb-0 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[var(--ink)]">{rev.studentName}</span>
+                      <span className="text-[var(--gray-600)]">• Verified Junior</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[var(--ink)]">★ {Number(rev.rating).toFixed(1)}</span>
+                      <span className="text-[var(--gray-600)]">
+                        {new Date(rev.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-[var(--gray-600)] leading-relaxed italic">
+                    "{rev.comment}"
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Show more button */}
+            {displayedReviews.length < totalReviews && (
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setReviewsVisibleCount((prev) => prev + 6)}
+                  className="px-6 py-2.5 rounded-full bg-white border border-[var(--line)] text-xs font-semibold text-[var(--ink)] hover:bg-[var(--snow)] transition-colors cursor-pointer"
+                >
+                  Show more reviews ({totalReviews - displayedReviews.length} remaining)
+                </button>
+              </div>
+            )}
+
+            {/* Prototype disclaimer note */}
+            <p className="text-center text-xs text-[var(--gray-600)] pt-2">
+              Demo data for the course prototype.
+            </p>
           </div>
         ) : (
-          <div className="p-8 text-center rounded-[28px] border border-[var(--line)] bg-white text-xs text-[var(--gray-600)]">
-            No reviews logged yet. Be the first to schedule a session and leave feedback.
+          <div className="space-y-4">
+            <div className="p-8 text-center rounded-[28px] border border-[var(--line)] bg-white text-xs text-[var(--gray-600)]">
+              No reviews yet.
+            </div>
+            <p className="text-center text-xs text-[var(--gray-600)]">
+              Demo data for the course prototype.
+            </p>
           </div>
         )}
       </SectionWrapper>
@@ -390,6 +523,12 @@ export function MentorDetailPage() {
         mentor={mentor}
         open={reportDialogOpen}
         onOpenChange={setReportDialogOpen}
+      />
+
+      <CertificateModal
+        mentor={mentor}
+        open={certModalOpen}
+        onOpenChange={setCertModalOpen}
       />
     </div>
   );

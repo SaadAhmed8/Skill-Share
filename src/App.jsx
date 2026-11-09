@@ -13,6 +13,7 @@ import { SessionsPage } from './pages/SessionsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ScrollToHash } from './components/ScrollToHash';
+import { PageTransition } from './components/PageTransition';
 import { HelpChat } from './components/HelpChat';
 import { Toaster } from 'sonner';
 import { useApp } from './context/AppContext';
@@ -99,7 +100,9 @@ function App() {
           />
 
           <main id="main-content" className="flex-1 w-full">
-            <AppRoutes />
+            <PageTransition>
+              <AppRoutes />
+            </PageTransition>
           </main>
 
           <Footer />

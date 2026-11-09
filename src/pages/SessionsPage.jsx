@@ -281,6 +281,7 @@ export function SessionsPage() {
                   <SessionCard
                     key={session.id}
                     session={session}
+                    isMentor={isMentorRole}
                     onOpenThread={handleOpenThread}
                     onFeedback={handleFeedbackClick}
                   />

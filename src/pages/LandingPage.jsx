@@ -13,10 +13,18 @@ import {
   GraduationCap,
   Users,
   Certificate,
+  ChatCircleText,
+  X,
 } from '@phosphor-icons/react';
 import { SectionWrapper } from '../components/SectionWrapper';
 import { GlowSearchBar } from '../components/GlowSearchBar';
 import { AuthCard } from '../components/AuthCard';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 import { useApp } from '../context/AppContext';
 import { featuredSubjects } from '../data/mockData';
 import { getSubjectName, getSubjectId } from '../lib/utils';
@@ -100,9 +108,21 @@ function TileStrip() {
 }
 
 export function LandingPage() {
-  const { currentUser, mentors, stats } = useApp();
+  const { currentUser, mentors, stats, platformFeedback, getPlatformFeedbackStats } = useApp();
   const [openFaq, setOpenFaq] = useState(null);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const navigate = useNavigate();
+
+  const feedbackStats = getPlatformFeedbackStats ? getPlatformFeedbackStats() : { rating: 4.8, count: 13 };
+  const allFeedback = platformFeedback || [];
+  const previewFeedback = allFeedback.slice(0, 4);
+
+  // Distribution for dialog
+  const feedbackDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  allFeedback.forEach((f) => {
+    const star = Math.round(Number(f.rating) || 5);
+    if (feedbackDistribution[star] !== undefined) feedbackDistribution[star]++;
+  });
 
   // Top mentors for preview (4 rows)
   const topMentors = mentors
@@ -142,7 +162,7 @@ export function LandingPage() {
   // -------------------------------------------------------------
   if (!currentUser) {
     return (
-      <div className="w-full bg-[var(--white)] min-h-[calc(100vh-80px)] flex flex-col justify-between py-8 sm:py-12">
+      <div className="w-full bg-[var(--white)] min-h-[calc(100vh-80px)] flex flex-col justify-between py-8 sm:py-12 entry-screen-fade">
         <div className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
           {/* Split Hero: Left headline, Right AuthCard */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center mb-16">
@@ -181,7 +201,7 @@ export function LandingPage() {
   // 2. LOGGED-IN HOME
   // -------------------------------------------------------------
   return (
-    <div className="flex flex-col w-full bg-[var(--white)]">
+    <div className="flex flex-col w-full bg-[var(--white)] home-screen-fade">
       {/* 1. TILE HERO (White band) */}
       <SectionWrapper variant="light" id="hero" containerClassName="pt-12 sm:pt-16 pb-14 text-center">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
@@ -481,6 +501,110 @@ export function LandingPage() {
         </div>
       </SectionWrapper>
 
+      {/* 6.5. PLATFORM FEEDBACK (Light-alt band, What students and mentors say) */}
+      <SectionWrapper variant="light-alt" id="platform-feedback" containerClassName="py-20">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
+          <div>
+            <span className="text-xs uppercase tracking-wider font-bold text-[var(--green-600)] block mb-1">
+              Community Voices
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--ink)]">
+              What students and mentors say
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="text-right">
+              <div className="flex items-center gap-1.5 justify-end text-sm font-bold text-[var(--ink)]">
+                <Star className="size-4 text-[var(--green-600)]" weight="fill" />
+                <span>{feedbackStats.rating.toFixed(1)} / 5.0</span>
+              </div>
+              <p className="text-xs text-[var(--gray-600)]">
+                Based on {feedbackStats.count} community reviews
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFeedbackDialogOpen(true)}
+              className="px-5 py-2.5 rounded-full bg-[var(--ink)] hover:bg-[var(--green-900)] text-white text-xs font-semibold transition-colors cursor-pointer"
+            >
+              See all feedback
+            </button>
+          </div>
+        </div>
+
+        {/* Mixed-size tile layout for 4 testimonials: (7 cols + 5 cols) on top, (5 cols + 7 cols) below */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {previewFeedback[0] && (
+            <div className="md:col-span-7 bg-white border border-[var(--line)] rounded-[28px] p-6 sm:p-8 flex flex-col justify-between space-y-4">
+              <p className="text-sm sm:text-base text-[var(--ink)] leading-relaxed italic">
+                "{previewFeedback[0].comment}"
+              </p>
+              <div className="pt-4 border-t border-[var(--line)] flex items-center justify-between text-xs">
+                <div>
+                  <p className="font-bold text-[var(--ink)]">{previewFeedback[0].name}</p>
+                  <p className="text-[var(--gray-600)]">
+                    {previewFeedback[0].role} • {previewFeedback[0].department} (Year {previewFeedback[0].year})
+                  </p>
+                </div>
+                <span className="font-bold text-[var(--green-600)]">★ {previewFeedback[0].rating}.0</span>
+              </div>
+            </div>
+          )}
+
+          {previewFeedback[1] && (
+            <div className="md:col-span-5 bg-[var(--mint)] border border-transparent rounded-[28px] p-6 sm:p-8 flex flex-col justify-between space-y-4">
+              <p className="text-sm sm:text-base text-[var(--ink)] leading-relaxed italic">
+                "{previewFeedback[1].comment}"
+              </p>
+              <div className="pt-4 border-t border-[var(--green-900)]/20 flex items-center justify-between text-xs">
+                <div>
+                  <p className="font-bold text-[var(--ink)]">{previewFeedback[1].name}</p>
+                  <p className="text-[var(--gray-600)]">
+                    {previewFeedback[1].role} • {previewFeedback[1].department}
+                  </p>
+                </div>
+                <span className="font-bold text-[var(--green-900)]">★ {previewFeedback[1].rating}.0</span>
+              </div>
+            </div>
+          )}
+
+          {previewFeedback[2] && (
+            <div className="md:col-span-5 bg-[var(--snow)] border border-[var(--line)] rounded-[28px] p-6 sm:p-8 flex flex-col justify-between space-y-4">
+              <p className="text-sm sm:text-base text-[var(--ink)] leading-relaxed italic">
+                "{previewFeedback[2].comment}"
+              </p>
+              <div className="pt-4 border-t border-[var(--line)] flex items-center justify-between text-xs">
+                <div>
+                  <p className="font-bold text-[var(--ink)]">{previewFeedback[2].name}</p>
+                  <p className="text-[var(--gray-600)]">
+                    {previewFeedback[2].role} • {previewFeedback[2].department}
+                  </p>
+                </div>
+                <span className="font-bold text-[var(--green-600)]">★ {previewFeedback[2].rating}.0</span>
+              </div>
+            </div>
+          )}
+
+          {previewFeedback[3] && (
+            <div className="md:col-span-7 bg-[var(--ink)] text-white rounded-[28px] p-6 sm:p-8 flex flex-col justify-between space-y-4">
+              <p className="text-sm sm:text-base text-white/95 leading-relaxed italic">
+                "{previewFeedback[3].comment}"
+              </p>
+              <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-white/80">
+                <div>
+                  <p className="font-bold text-white">{previewFeedback[3].name}</p>
+                  <p className="text-[var(--gray-400)]">
+                    {previewFeedback[3].role} • {previewFeedback[3].department} (Year {previewFeedback[3].year})
+                  </p>
+                </div>
+                <span className="font-bold text-[var(--green-400)]">★ {previewFeedback[3].rating}.0</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </SectionWrapper>
+
       {/* 7. FAQ (Snow band, accordion) */}
       <SectionWrapper variant="light-alt" id="faq" containerClassName="py-20">
         <div className="text-center max-w-xl mx-auto mb-14">
@@ -548,6 +672,88 @@ export function LandingPage() {
           </div>
         </div>
       </SectionWrapper>
+
+      {/* Platform Feedback Modal (Full list + Rating breakdown) */}
+      <Dialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-white border border-[var(--line)] rounded-[28px] p-6 sm:p-8">
+          <DialogHeader className="pb-4 border-b border-[var(--line)]">
+            <DialogTitle className="font-bold text-2xl text-[var(--ink)]">
+              Community Feedback &amp; Reviews
+            </DialogTitle>
+            <p className="text-xs text-[var(--gray-600)] mt-1">
+              What verified students and mentors at NED share about their experience.
+            </p>
+          </DialogHeader>
+
+          {/* Breakdown summary */}
+          <div className="bg-[var(--snow)] rounded-[20px] p-5 my-4 grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+            <div className="sm:col-span-4 text-center sm:text-left sm:border-r border-[var(--line)] sm:pr-4">
+              <p className="font-bold text-4xl text-[var(--ink)]">
+                {feedbackStats.rating.toFixed(1)}
+              </p>
+              <div className="flex items-center justify-center sm:justify-start gap-1 text-[var(--green-600)] my-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className="size-3.5"
+                    weight={star <= Math.round(feedbackStats.rating) ? 'fill' : 'regular'}
+                  />
+                ))}
+              </div>
+              <p className="text-[11px] text-[var(--gray-600)]">
+                {feedbackStats.count} total reviews
+              </p>
+            </div>
+
+            <div className="sm:col-span-8 space-y-1.5">
+              {[5, 4, 3, 2, 1].map((star) => {
+                const count = feedbackDistribution[star] || 0;
+                const pct = feedbackStats.count > 0 ? (count / feedbackStats.count) * 100 : 0;
+                return (
+                  <div key={star} className="flex items-center gap-2 text-xs">
+                    <span className="w-10 text-[var(--ink)] font-semibold flex items-center gap-0.5">
+                      <span>{star}</span>
+                      <Star className="size-2.5 text-[var(--ink)]" weight="fill" />
+                    </span>
+                    <div className="flex-1 h-2 bg-white rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[var(--ink)]"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="w-6 text-right text-[var(--gray-600)] font-mono text-[10px]">
+                      {count}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Full List */}
+          <div className="divide-y divide-[var(--line)]">
+            {allFeedback.map((f) => (
+              <div key={f.id} className="py-4 first:pt-0 last:pb-0 space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[var(--ink)]">{f.name}</span>
+                    <span className="text-[var(--gray-600)]">• {f.role} ({f.department})</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className="font-bold text-[var(--green-600)]">★ {f.rating}.0</span>
+                    <span className="text-[var(--gray-400)]">
+                      {new Date(f.date).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs sm:text-sm text-[var(--gray-600)] leading-relaxed italic">
+                  "{f.comment}"
+                </p>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

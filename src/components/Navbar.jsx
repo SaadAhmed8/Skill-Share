@@ -11,6 +11,7 @@ import {
 } from '@phosphor-icons/react';
 import { useApp } from '../context/AppContext';
 import { NotificationBell } from './NotificationBell';
+import { Logo } from './Logo';
 import { cn } from '../lib/utils';
 
 export function Navbar() {
@@ -42,18 +43,8 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full bg-[var(--white)] border-b border-[var(--line)] text-[var(--ink)]">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand: round black circle with white 'S' + wordmark 'Skill Share' + small 'NED' */}
-        <Link to="/" className="flex items-center gap-3 group text-left">
-          <div className="size-10 rounded-full bg-[var(--ink)] text-[var(--white)] flex items-center justify-center font-heading font-bold text-lg select-none">
-            S
-          </div>
-          <div className="flex flex-col leading-tight">
-            <span className="font-heading font-bold text-xl tracking-tight text-[var(--ink)]">
-              Skill Share
-            </span>
-            <span className="text-[10px] uppercase tracking-widest text-[var(--gray-600)] font-semibold">
-              NED
-            </span>
-          </div>
+        <Link to="/" className="group text-left">
+          <Logo />
         </Link>
 
         {/* When Logged Out: NO page links. Only Log in link and Sign up outlined pill on right */}

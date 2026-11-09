@@ -7,13 +7,18 @@ import {
   initialReviews,
   initialReports,
   initialNotifications,
+  initialPlatformFeedback,
 } from '../data/mockData';
+import { generateSeedData } from '../data/seedReviews';
 import { validateUniversityEmail } from '../lib/validators';
 import { generatePlatformMeetingLink } from '../lib/utils';
 
 const AppContext = createContext(null);
 
+const DATA_VERSION = 'v3_certificate_rebuild';
+
 const STORAGE_KEYS = {
+  DATA_VERSION: 'skillshare_data_version',
   CURRENT_USER: 'skillshare_current_user',
   USERS: 'skillshare_users',
   MENTORS: 'skillshare_mentors',
@@ -22,7 +27,64 @@ const STORAGE_KEYS = {
   REPORTS: 'skillshare_reports',
   NOTIFICATIONS: 'skillshare_notifications',
   MENTOR_FEEDBACK: 'skillshare_mentor_feedback',
+  PLATFORM_FEEDBACK: 'skillshare_platform_feedback',
 };
+
+// Generate seeded reviews & completed session records deterministically
+const seedData = generateSeedData(initialMentors);
+
+// Helper to seed or merge
+function getInitialReviews() {
+  const saved = localStorage.getItem(STORAGE_KEYS.REVIEWS);
+  const seedIds = new Set(seedData.reviews.map((r) => r.id));
+  if (saved) {
+    try {
+      const existing = JSON.parse(saved);
+      const userCustom = existing.filter((r) => !seedIds.has(r.id) && !r.id.startsWith('rev-'));
+      return [...seedData.reviews, ...userCustom];
+    } catch (e) { }
+  }
+  return seedData.reviews;
+}
+
+function getInitialSessionRequests() {
+  const savedVersion = localStorage.getItem(STORAGE_KEYS.DATA_VERSION);
+  const saved = localStorage.getItem(STORAGE_KEYS.SESSION_REQUESTS);
+  if (savedVersion !== DATA_VERSION) {
+    let existing = [];
+    if (saved) {
+      try {
+        existing = JSON.parse(saved);
+      } catch (e) { }
+    }
+    const seedIds = new Set(seedData.completedSessions.map((s) => s.id));
+    const baseInitialIds = new Set(initialSessionRequests.map((s) => s.id));
+    const userCustom = existing.filter((s) => !seedIds.has(s.id) && !baseInitialIds.has(s.id));
+    const merged = [...initialSessionRequests, ...seedData.completedSessions, ...userCustom];
+    localStorage.setItem(STORAGE_KEYS.SESSION_REQUESTS, JSON.stringify(merged));
+    return merged;
+  }
+  return saved ? JSON.parse(saved) : [...initialSessionRequests, ...seedData.completedSessions];
+}
+
+function getInitialPlatformFeedback() {
+  const savedVersion = localStorage.getItem(STORAGE_KEYS.DATA_VERSION);
+  const saved = localStorage.getItem(STORAGE_KEYS.PLATFORM_FEEDBACK);
+  if (savedVersion !== DATA_VERSION) {
+    let existing = [];
+    if (saved) {
+      try {
+        existing = JSON.parse(saved);
+      } catch (e) { }
+    }
+    const seedIds = new Set(initialPlatformFeedback.map((pf) => pf.id));
+    const userCustom = existing.filter((pf) => !seedIds.has(pf.id));
+    const merged = [...initialPlatformFeedback, ...userCustom];
+    localStorage.setItem(STORAGE_KEYS.PLATFORM_FEEDBACK, JSON.stringify(merged));
+    return merged;
+  }
+  return saved ? JSON.parse(saved) : initialPlatformFeedback;
+}
 
 export function AppProvider({ children }) {
   // Current user state (defaults to student-1 or stored)
@@ -44,18 +106,21 @@ export function AppProvider({ children }) {
   });
 
   const [mentors, setMentors] = useState(() => {
+    const savedVersion = localStorage.getItem(STORAGE_KEYS.DATA_VERSION);
     const saved = localStorage.getItem(STORAGE_KEYS.MENTORS);
+    if (savedVersion !== DATA_VERSION) {
+      localStorage.setItem(STORAGE_KEYS.MENTORS, JSON.stringify(initialMentors));
+      return initialMentors;
+    }
     return saved ? JSON.parse(saved) : initialMentors;
   });
 
   const [sessionRequests, setSessionRequests] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.SESSION_REQUESTS);
-    return saved ? JSON.parse(saved) : initialSessionRequests;
+    return getInitialSessionRequests();
   });
 
   const [reviews, setReviews] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.REVIEWS);
-    return saved ? JSON.parse(saved) : initialReviews;
+    return getInitialReviews();
   });
 
   const [reports, setReports] = useState(() => {
@@ -72,6 +137,15 @@ export function AppProvider({ children }) {
     const saved = localStorage.getItem(STORAGE_KEYS.MENTOR_FEEDBACK);
     return saved ? JSON.parse(saved) : [];
   });
+
+  const [platformFeedback, setPlatformFeedback] = useState(() => {
+    return getInitialPlatformFeedback();
+  });
+
+  // Mark data version updated in storage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.DATA_VERSION, DATA_VERSION);
+  }, []);
 
   // Save changes to localStorage
   useEffect(() => {
@@ -109,6 +183,10 @@ export function AppProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.MENTOR_FEEDBACK, JSON.stringify(mentorFeedbacks));
   }, [mentorFeedbacks]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.PLATFORM_FEEDBACK, JSON.stringify(platformFeedback));
+  }, [platformFeedback]);
 
   // Auth: Log in
   const logIn = (email, password) => {
@@ -173,6 +251,41 @@ export function AppProvider({ children }) {
 
   const getMentorReviews = (mentorId) => {
     return reviews.filter((r) => r.mentorId === mentorId);
+  };
+
+  const getMentorStats = (mentorId) => {
+    const mentorObj = mentors.find((m) => m.id === mentorId);
+    const mentorReviews = reviews.filter((r) => r.mentorId === mentorId);
+    const mentorCompletedSessions = sessionRequests.filter(
+      (s) => s.mentorId === mentorId && s.status === 'completed'
+    );
+    const count = mentorReviews.length > 0 ? mentorReviews.length : mentorObj?.ratingCount || 0;
+    let avg = mentorObj?.rating || 0;
+    if (mentorReviews.length > 0) {
+      const sum = mentorReviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+      avg = Number((sum / mentorReviews.length).toFixed(2));
+    }
+    const sessionHours = mentorCompletedSessions.length > 0
+      ? mentorCompletedSessions.reduce(
+          (acc, s) => acc + (Number(s.durationMinutes) || 60) / 60,
+          0
+        )
+      : mentorObj?.hoursTaught || 0;
+
+    const uniqueStudents = new Set(
+      mentorCompletedSessions.map((s) => s.studentId).filter(Boolean)
+    );
+    const studentsTaught = uniqueStudents.size > 0
+      ? uniqueStudents.size
+      : Math.max(1, Math.round(count * 0.8));
+
+    return {
+      reviewCount: count,
+      rating: avg,
+      hoursTaught: Math.round(sessionHours),
+      completedSessionsCount: mentorCompletedSessions.length || count,
+      studentsTaught,
+    };
   };
 
   const getMentorSessions = (mentorId) => {
@@ -696,17 +809,41 @@ export function AppProvider({ children }) {
     return newMsg;
   };
 
-  const submitStudentFeedback = ({
-    sessionId,
-    mentorId,
-    teachingRating,
-    clarityRating,
-    punctualityRating,
-    overallRating,
-    comment,
-    platformRating,
-    platformSuggestion,
-  }) => {
+  const submitStudentFeedback = (
+    sessionIdOrData,
+    optionalData = {}
+  ) => {
+    // Support either submitStudentFeedback(sessionId, data) or submitStudentFeedback({ sessionId, ... })
+    const payload =
+      typeof sessionIdOrData === 'object' && sessionIdOrData !== null
+        ? sessionIdOrData
+        : { sessionId: sessionIdOrData, ...optionalData };
+
+    const {
+      sessionId,
+      teachingRating = 5,
+      clarityRating = 5,
+      punctualityRating = 5,
+      overallRating = 5,
+      comment = '',
+      platformRating = 5,
+      platformSuggestion = '',
+    } = payload;
+
+    if (!sessionId) {
+      throw new Error('Session ID is required to submit feedback.');
+    }
+
+    const sess = sessionRequests.find((s) => s.id === sessionId);
+    const mentorId = payload.mentorId || sess?.mentorId;
+    if (!mentorId) {
+      throw new Error('Mentor ID could not be identified for this session.');
+    }
+
+    if (sess && sess.feedbackGiven) {
+      throw new Error('Feedback has already been submitted for this session.');
+    }
+
     const avgRating = Number(
       ((teachingRating + clarityRating + punctualityRating + overallRating) / 4).toFixed(1)
     );
@@ -715,21 +852,24 @@ export function AppProvider({ children }) {
       id: `v-${Date.now()}`,
       sessionId,
       mentorId,
-      studentId: currentUser.id,
-      studentName: currentUser.name.split(' ')[0],
+      studentId: currentUser?.id || sess?.studentId || 'anonymous-student',
+      studentName: (currentUser?.name || sess?.studentName || 'Student').split(' ')[0],
       rating: avgRating,
-      comment: comment.trim(),
+      comment: (comment || '').trim(),
       platformRating,
-      platformSuggestion,
+      platformSuggestion: (platformSuggestion || '').trim(),
       createdAt: new Date().toISOString(),
     };
 
+    // 1. Append review
     setReviews((prev) => [newReview, ...prev]);
 
+    // 2. Mark session feedbackGiven
     setSessionRequests((prev) =>
       prev.map((s) => (s.id === sessionId ? { ...s, feedbackGiven: true } : s))
     );
 
+    // 3. Update mentor object rating, ratingCount, isNew
     setMentors((prev) =>
       prev.map((m) => {
         if (m.id === mentorId) {
@@ -747,12 +887,29 @@ export function AppProvider({ children }) {
       })
     );
 
+    // 4. Append to platform feedback
+    const studentUser = currentUser || { name: sess?.studentName || 'Student', department: 'Computer Science', year: 1 };
+    const newPlatformEntry = {
+      id: `pf-${Date.now()}`,
+      name: studentUser.name,
+      role: 'Student',
+      department: studentUser.department || 'Undergraduate',
+      year: studentUser.year || 1,
+      rating: Number(platformRating) || 5,
+      comment: (platformSuggestion && platformSuggestion.trim().length > 0)
+        ? platformSuggestion.trim()
+        : (comment || '').trim().slice(0, 160) || 'Helpful and structured peer session.',
+      date: new Date().toISOString(),
+    };
+    setPlatformFeedback((prev) => [newPlatformEntry, ...prev]);
+
+    // 5. Notify mentor
     const mentorObj = mentors.find((m) => m.id === mentorId);
     if (mentorObj?.userId) {
       addNotification({
         userId: mentorObj.userId,
         title: 'New Student Review Received',
-        message: `${currentUser.name.split(' ')[0]} gave you ${avgRating}★ for your recent session!`,
+        message: `${(currentUser?.name || 'Student').split(' ')[0]} gave you ${avgRating}★ for your recent session!`,
         type: 'feedback_received',
         link: `/mentors/${mentorId}`,
       });
@@ -761,24 +918,59 @@ export function AppProvider({ children }) {
     return newReview;
   };
 
-  const submitMentorFeedback = ({
-    sessionId,
-    studentExperienceRating,
-    studentNote,
-    platformRating,
-    platformSuggestion,
-  }) => {
+  const submitMentorFeedback = (
+    sessionIdOrData,
+    optionalData = {}
+  ) => {
+    const payload =
+      typeof sessionIdOrData === 'object' && sessionIdOrData !== null
+        ? sessionIdOrData
+        : { sessionId: sessionIdOrData, ...optionalData };
+
+    const {
+      sessionId,
+      studentExperienceRating = 5,
+      studentNote = '',
+      platformRating = 5,
+      platformSuggestion = '',
+    } = payload;
+
     const feedback = {
       id: `mf-${Date.now()}`,
       sessionId,
-      mentorId: currentUser.id,
+      mentorId: currentUser?.id,
       studentExperienceRating,
-      studentNote,
+      studentNote: (studentNote || '').trim(),
       platformRating,
-      platformSuggestion,
+      platformSuggestion: (platformSuggestion || '').trim(),
       createdAt: new Date().toISOString(),
     };
+
     setMentorFeedbacks((prev) => [...prev, feedback]);
+
+    if (sessionId) {
+      setSessionRequests((prev) =>
+        prev.map((s) => (s.id === sessionId ? { ...s, feedbackGiven: true } : s))
+      );
+    }
+
+    if (platformSuggestion || platformRating) {
+      const mentorUser = currentUser || { name: 'Senior Mentor', department: 'Engineering', year: 4 };
+      const newPlatformEntry = {
+        id: `pf-${Date.now()}`,
+        name: mentorUser.name,
+        role: 'Mentor',
+        department: mentorUser.department || 'Engineering',
+        year: mentorUser.year || 4,
+        rating: Number(platformRating) || 5,
+        comment: (platformSuggestion && platformSuggestion.trim().length > 0)
+          ? platformSuggestion.trim()
+          : 'Great experience hosting and coordinating through Skill Share.',
+        date: new Date().toISOString(),
+      };
+      setPlatformFeedback((prev) => [newPlatformEntry, ...prev]);
+    }
+
     return feedback;
   };
 
@@ -865,13 +1057,30 @@ export function AppProvider({ children }) {
       .sort((a, b) => b.count - a.count);
   };
 
+  // Platform feedback helpers
+  const getPlatformFeedbackStats = () => {
+    const count = platformFeedback.length;
+    let avg = 0;
+    if (count > 0) {
+      const sum = platformFeedback.reduce((acc, f) => acc + (Number(f.rating) || 0), 0);
+      avg = Number((sum / count).toFixed(1));
+    }
+    return {
+      count,
+      rating: avg,
+    };
+  };
+
   // Dynamic Statistics
   const stats = {
     totalUsers: users.length,
     approvedMentors: mentors.filter((m) => m.status === 'approved' && !m.suspended).length,
     pendingMentors: mentors.filter((m) => m.status === 'pending').length,
     totalSessions: sessionRequests.filter((s) => s.status === 'completed').length,
-    totalVolunteerHours: mentors.reduce((acc, m) => acc + (m.hoursTaught || 0), 0),
+    totalVolunteerHours: mentors.reduce((acc, m) => {
+      const ms = getMentorStats(m.id);
+      return acc + (ms.hoursTaught || m.hoursTaught || 0);
+    }, 0),
     openReports: reports.filter((r) => r.status === 'Open').length,
   };
 
@@ -887,6 +1096,8 @@ export function AppProvider({ children }) {
         reports,
         notifications,
         mentorFeedbacks,
+        platformFeedback,
+        getPlatformFeedbackStats,
         stats,
         loginAs,
         logIn,
@@ -898,6 +1109,7 @@ export function AppProvider({ children }) {
         getMentorById,
         getMentorReviews,
         getMentorSessions,
+        getMentorStats,
         getMentorStatusForUser,
         getMentorForUser,
         applyAsMentor,

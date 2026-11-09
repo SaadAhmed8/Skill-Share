@@ -53,37 +53,97 @@ export function FeedbackDialog({
     e.preventDefault();
     setError('');
 
-    if (!comment.trim() || comment.trim().length < 10) {
-      setError('Please provide at least 10 characters in your written review.');
+    if (session.status !== 'completed') {
+      const err = 'Feedback can only be submitted for completed sessions.';
+      setError(err);
+      toast.error(err);
       return;
     }
 
-    submitStudentFeedback(session.id, {
-      teachingRating,
-      clarityRating,
-      punctualityRating,
-      overallRating,
-      comment: comment.trim(),
-      platformRating,
-      platformSuggestion: platformSuggestion.trim(),
-    });
+    if (session.feedbackGiven) {
+      const err = 'Feedback has already been given for this session.';
+      setError(err);
+      toast.error(err);
+      return;
+    }
 
-    setIsSuccess(true);
-    toast.success('Thank you for rating your peer mentoring session.');
+    if (currentUser?.id && session.studentId && currentUser.id !== session.studentId) {
+      const err = 'Only the student who requested this session can leave student feedback.';
+      setError(err);
+      toast.error(err);
+      return;
+    }
+
+    if (!teachingRating || !clarityRating || !punctualityRating || !overallRating) {
+      const err = 'Please provide a star rating for all four mentor evaluation criteria.';
+      setError(err);
+      toast.error(err);
+      return;
+    }
+
+    if (!comment.trim() || comment.trim().length < 10) {
+      const err = 'Please provide at least 10 characters in your written review.';
+      setError(err);
+      toast.error(err);
+      return;
+    }
+
+    try {
+      submitStudentFeedback({
+        sessionId: session.id,
+        mentorId: session.mentorId,
+        teachingRating,
+        clarityRating,
+        punctualityRating,
+        overallRating,
+        comment: comment.trim(),
+        platformRating,
+        platformSuggestion: platformSuggestion.trim(),
+      });
+
+      setIsSuccess(true);
+      toast.success('Feedback published');
+    } catch (err) {
+      const msg = err?.message || 'Failed to publish feedback. Please try again.';
+      setError(msg);
+      toast.error(msg);
+    }
   };
 
   const handleMentorSubmit = (e) => {
     e.preventDefault();
+    setError('');
 
-    submitMentorFeedback(session.id, {
-      studentExperienceRating,
-      studentNote: studentNote.trim(),
-      platformRating,
-      platformSuggestion: platformSuggestion.trim(),
-    });
+    if (session.status !== 'completed') {
+      const err = 'Feedback can only be submitted for completed sessions.';
+      setError(err);
+      toast.error(err);
+      return;
+    }
 
-    setIsSuccess(true);
-    toast.success('Thank you for contributing feedback as a senior mentor.');
+    if (session.feedbackGiven) {
+      const err = 'Feedback has already been given for this session.';
+      setError(err);
+      toast.error(err);
+      return;
+    }
+
+    try {
+      submitMentorFeedback({
+        sessionId: session.id,
+        studentExperienceRating,
+        studentNote: studentNote.trim(),
+        platformRating,
+        platformSuggestion: platformSuggestion.trim(),
+      });
+
+      setIsSuccess(true);
+      toast.success('Feedback published');
+    } catch (err) {
+      const msg = err?.message || 'Failed to submit feedback. Please try again.';
+      setError(msg);
+      toast.error(msg);
+    }
   };
 
   const StarInput = ({ label, value, onChange }) => (
@@ -100,9 +160,8 @@ export function FeedbackDialog({
           >
             <Star
               weight={star <= value ? 'fill' : 'bold'}
-              className={`size-4.5 ${
-                star <= value ? 'text-[var(--ink)]' : 'text-[var(--line)]'
-              }`}
+              className={`size-4.5 ${star <= value ? 'text-[var(--ink)]' : 'text-[var(--line)]'
+                }`}
             />
           </button>
         ))}

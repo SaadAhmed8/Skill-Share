@@ -1,4 +1,5 @@
 export { cn } from "cn";
+export const CERTIFICATE_MIN_HOURS = 30;
 import {
   Code,
   Calculator,

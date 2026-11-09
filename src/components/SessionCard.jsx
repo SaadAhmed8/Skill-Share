@@ -250,16 +250,18 @@ export function SessionCard({
             <>
               {session.feedbackGiven ? (
                 <span className="px-3 py-1 rounded-[4px] text-xs font-semibold bg-[#EDE8DD] text-[#5E9680] border border-[#5E9680]/30">
-                  Feedback Logged
+                  Feedback given
                 </span>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => onFeedback(session)}
-                  className="px-4 py-1.5 rounded-[6px] bg-[#E0A030] text-[#0A1628] hover:bg-[#A86F10] hover:text-[#F7F4EE] text-xs font-semibold cursor-pointer transition-colors"
-                >
-                  {isMentor ? 'Give Feedback' : 'Leave Feedback'}
-                </button>
+                (!isMentor || session.mentorId) && (
+                  <button
+                    type="button"
+                    onClick={() => onFeedback(session)}
+                    className="px-4 py-1.5 rounded-[6px] bg-[#E0A030] text-[#0A1628] hover:bg-[#A86F10] hover:text-[#F7F4EE] text-xs font-semibold cursor-pointer transition-colors"
+                  >
+                    {isMentor ? 'Give Feedback' : 'Leave Feedback'}
+                  </button>
+                )
               )}
             </>
           )}

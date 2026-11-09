@@ -13,12 +13,16 @@ import {
   Check,
   X,
   ChartBar,
+  Star,
+  ChatCircleText,
+  Certificate,
 } from '@phosphor-icons/react';
 import { SectionWrapper } from './SectionWrapper';
 import { RequestThread } from './RequestThread';
+import { CertificateModal } from './CertificateModal';
 import { useApp } from '../context/AppContext';
 import { MIN_GPA } from '../lib/validators';
-import { getSubjectName } from '../lib/utils';
+import { getSubjectName, CERTIFICATE_MIN_HOURS } from '../lib/utils';
 import { toast } from 'sonner';
 
 export function AdminDashboard() {
@@ -35,6 +39,9 @@ export function AdminDashboard() {
     getFlaggedMessages,
     getSessionFlags,
     getDemandBySubject,
+    platformFeedback,
+    getPlatformFeedbackStats,
+    getMentorStats,
     stats,
   } = useApp();
 
@@ -42,6 +49,8 @@ export function AdminDashboard() {
   const [sessionLogFilter, setSessionLogFilter] = useState('all');
   const [inspectThreadSession, setInspectThreadSession] = useState(null);
   const [inspectThreadOpen, setInspectThreadOpen] = useState(false);
+  const [certMentor, setCertMentor] = useState(null);
+  const [certModalOpen, setCertModalOpen] = useState(false);
   const [rejectingMentorId, setRejectingMentorId] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -244,11 +253,10 @@ export function AdminDashboard() {
                       </td>
                       <td className="py-3.5 px-4">
                         <span
-                          className={`inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-full text-[11px] ${
-                            app.gpa >= MIN_GPA
+                          className={`inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-full text-[11px] ${app.gpa >= MIN_GPA
                               ? 'bg-[var(--mint)] text-[var(--green-900)]'
                               : 'bg-red-50 text-[var(--error)] border border-red-200'
-                          }`}
+                            }`}
                         >
                           CGPA: {app.gpa ? app.gpa.toFixed(2) : '3.40'}{' '}
                           {app.gpa >= MIN_GPA ? '✓' : '⚠️'}
@@ -319,22 +327,20 @@ export function AdminDashboard() {
               <button
                 type="button"
                 onClick={() => setReportsTab('reports')}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-                  reportsTab === 'reports'
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${reportsTab === 'reports'
                     ? 'bg-[var(--ink)] text-white'
                     : 'text-[var(--gray-600)] hover:text-[var(--ink)]'
-                }`}
+                  }`}
               >
                 Direct Reports ({reports.length})
               </button>
               <button
                 type="button"
                 onClick={() => setReportsTab('flagged')}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-                  reportsTab === 'flagged'
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${reportsTab === 'flagged'
                     ? 'bg-[var(--ink)] text-white'
                     : 'text-[var(--gray-600)] hover:text-[var(--ink)]'
-                }`}
+                  }`}
               >
                 Keyword Triggers ({flaggedMessages.length})
               </button>
@@ -367,11 +373,10 @@ export function AdminDashboard() {
                       </td>
                       <td className="py-3.5 px-4">
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                            rep.status === 'Open'
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${rep.status === 'Open'
                               ? 'bg-red-50 text-[var(--error)]'
                               : 'bg-[var(--mint)] text-[var(--green-900)]'
-                          }`}
+                            }`}
                         >
                           {rep.status}
                         </span>
@@ -467,11 +472,10 @@ export function AdminDashboard() {
                   key={flt}
                   type="button"
                   onClick={() => setSessionLogFilter(flt)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer capitalize ${
-                    sessionLogFilter === flt
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer capitalize ${sessionLogFilter === flt
                       ? 'bg-[var(--green-400)] text-[var(--ink)]'
                       : 'border border-white/10 text-white/70 hover:bg-white/10'
-                  }`}
+                    }`}
                 >
                   {flt}
                 </button>
@@ -613,6 +617,57 @@ export function AdminDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Platform Feedback Panel */}
+          <div className="space-y-4 bg-white border border-[var(--line)] rounded-[28px] p-6 mt-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-[var(--ink)]">
+                  Platform Feedback
+                </h3>
+                <p className="text-xs text-[var(--gray-600)] mt-0.5">
+                  Community rating and latest submissions
+                </p>
+              </div>
+              {(() => {
+                const pfStats = getPlatformFeedbackStats ? getPlatformFeedbackStats() : { rating: 4.8, count: 13 };
+                return (
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-sm font-bold text-[var(--ink)]">
+                      <Star className="size-3.5 text-[var(--green-600)]" weight="fill" />
+                      <span>{pfStats.rating.toFixed(1)}</span>
+                    </div>
+                    <span className="text-[11px] text-[var(--gray-600)] font-medium">
+                      {pfStats.count} reviews
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Latest 5 entries */}
+            <div className="divide-y divide-[var(--line)] border-t border-[var(--line)] pt-2 space-y-3">
+              {(platformFeedback || []).slice(0, 5).map((entry) => (
+                <div key={entry.id} className="pt-3 first:pt-1 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-[var(--ink)]">{entry.name}</span>
+                      <span className="text-[11px] text-[var(--gray-600)]">({entry.role} • {entry.department})</span>
+                    </div>
+                    <span className="font-semibold text-[var(--green-600)] text-[11px]">
+                      ★ {entry.rating}.0
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--gray-600)] line-clamp-2 leading-relaxed italic">
+                    "{entry.comment}"
+                  </p>
+                  <p className="text-[10px] text-[var(--gray-400)]">
+                    {new Date(entry.date).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </SectionWrapper>
 
@@ -636,41 +691,66 @@ export function AdminDashboard() {
                   <th className="py-3.5 px-4">Department</th>
                   <th className="py-3.5 px-4">Rating</th>
                   <th className="py-3.5 px-4">Hours Taught</th>
+                  <th className="py-3.5 px-4">Certificate</th>
                   <th className="py-3.5 px-4 text-right">Visibility / Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10 text-white">
-                {allApproved.map((m) => (
-                  <tr key={m.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3 px-4 font-bold">{m.name}</td>
-                    <td className="py-3 px-4 text-[var(--gray-400)]">{m.department}</td>
-                    <td className="py-3 px-4 text-[var(--green-400)] font-bold">
-                      {m.rating > 0 ? `${m.rating.toFixed(1)} ★` : 'New'}
-                    </td>
-                    <td className="py-3 px-4">{m.hoursTaught || 0} hrs</td>
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextState = !m.suspended;
-                          suspendMentor(m.id, nextState);
-                          toast.info(
-                            nextState
-                              ? `Suspended ${m.name}. Profile hidden from public directory.`
-                              : `Reinstated ${m.name}. Profile is now active.`
-                          );
-                        }}
-                        className={`px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors ${
-                          m.suspended
-                            ? 'bg-red-950 text-red-300 border border-red-800'
-                            : 'bg-[var(--green-900)] text-white border border-[var(--green-600)]'
-                        }`}
-                      >
-                        {m.suspended ? 'Suspended (Hidden)' : 'Active (Visible)'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {allApproved.map((m) => {
+                  const mStats = getMentorStats ? getMentorStats(m.id) : null;
+                  const mHours = mStats?.hoursTaught !== undefined ? mStats.hoursTaught : (m.hoursTaught || 0);
+                  const isEligible = mHours >= CERTIFICATE_MIN_HOURS;
+
+                  return (
+                    <tr key={m.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-3 px-4 font-bold">{m.name}</td>
+                      <td className="py-3 px-4 text-[var(--gray-400)]">{m.department}</td>
+                      <td className="py-3 px-4 text-[var(--green-400)] font-bold">
+                        {m.rating > 0 ? `${m.rating.toFixed(1)} ★` : 'New'}
+                      </td>
+                      <td className="py-3 px-4">{mHours} hrs</td>
+                      <td className="py-3 px-4">
+                        {isEligible ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCertMentor(m);
+                              setCertModalOpen(true);
+                            }}
+                            className="px-3 py-1 rounded-full bg-[var(--green-900)] text-[var(--green-400)] border border-[var(--green-600)] text-[11px] font-semibold flex items-center gap-1 hover:bg-black transition-colors cursor-pointer"
+                          >
+                            <Certificate className="size-3" weight="bold" />
+                            <span>View ({mHours}h)</span>
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-[var(--gray-400)]">
+                            {mHours}/{CERTIFICATE_MIN_HOURS}h
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextState = !m.suspended;
+                            suspendMentor(m.id, nextState);
+                            toast.info(
+                              nextState
+                                ? `Suspended ${m.name}. Profile hidden from public directory.`
+                                : `Reinstated ${m.name}. Profile is now active.`
+                            );
+                          }}
+                          className={`px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors ${m.suspended
+                              ? 'bg-red-950 text-red-300 border border-red-800'
+                              : 'bg-[var(--green-900)] text-white border border-[var(--green-600)]'
+                            }`}
+                        >
+                          {m.suspended ? 'Suspended (Hidden)' : 'Active (Visible)'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -723,6 +803,12 @@ export function AdminDashboard() {
           </form>
         </div>
       )}
+      {/* Certificate Modal for eligible mentors */}
+      <CertificateModal
+        mentor={certMentor}
+        open={certModalOpen}
+        onOpenChange={setCertModalOpen}
+      />
     </div>
   );
 }

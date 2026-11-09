@@ -41,7 +41,7 @@ const DAYS = ['Any Day', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function MentorsListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { getApprovedMentors } = useApp();
+  const { getApprovedMentors, getMentorStats } = useApp();
 
   const urlSubject = searchParams.get('subject') || '';
   const urlQuery = searchParams.get('q') || searchParams.get('search') || '';
@@ -413,7 +413,11 @@ export function MentorsListPage() {
               <div className="bg-white border border-[var(--line)] rounded-[28px] overflow-hidden divide-y divide-[var(--line)]">
                 {filteredMentors.map((m) => {
                   const initials = m.name.split(' ').map((n) => n[0]).join('').slice(0, 2);
-                  const isNew = m.isNew || !m.ratingCount;
+                  const stats = getMentorStats ? getMentorStats(m.id) : null;
+                  const ratingCount = stats ? stats.reviewCount : m.ratingCount || 0;
+                  const rating = stats && stats.reviewCount > 0 ? stats.rating : m.rating || 0;
+                  const hoursTaught = stats ? stats.hoursTaught : m.hoursTaught || 0;
+                  const isNew = m.isNew || !ratingCount;
 
                   return (
                     <div
@@ -466,7 +470,7 @@ export function MentorsListPage() {
                             <Star className="size-3.5" weight="fill" />
                           </div>
                           <span>
-                            {m.rating > 0 ? `${m.rating.toFixed(1)} (${m.ratingCount || 0})` : 'New'}
+                            {rating > 0 ? `${rating.toFixed(1)} (${ratingCount})` : 'New'}
                           </span>
                         </div>
 
@@ -474,7 +478,7 @@ export function MentorsListPage() {
                           <div className="size-7 rounded-full bg-[var(--snow)] text-[var(--ink)] flex items-center justify-center">
                             <Clock className="size-3.5" weight="bold" />
                           </div>
-                          <span>{m.hoursTaught || 0} hrs</span>
+                          <span>{hoursTaught} hrs</span>
                         </div>
 
                         <Link

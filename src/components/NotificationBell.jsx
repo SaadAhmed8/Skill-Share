@@ -1,127 +1,282 @@
 // src/components/NotificationBell.jsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Bell, Check, Calendar, ChatCircle, Star, ArrowRight } from '@phosphor-icons/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import {
+  Bell,
+  CalendarCheck,
+  ChatCircle,
+  Star,
+  Clock,
+  Sparkle,
+} from '@phosphor-icons/react';
 import { useApp } from '../context/AppContext';
 import { formatTimeAgo } from '../lib/utils';
 
 export function NotificationBell() {
   const { currentUser, notifications, markNotificationsRead } = useApp();
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'unread'
   const navigate = useNavigate();
+
+  const bellButtonRef = useRef(null);
+  const panelRef = useRef(null);
+
+  const userNotifs = (notifications || []).filter((n) => n.userId === currentUser?.id);
+  const unreadCount = userNotifs.filter((n) => !n.read).length;
+
+  // Handle closing on Escape key or outside click, and restore focus to bell
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setOpen(false);
+        bellButtonRef.current?.focus();
+      }
+    };
+
+    const handleClickOutside = (e) => {
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(e.target) &&
+        bellButtonRef.current &&
+        !bellButtonRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
 
   if (!currentUser) return null;
 
-  const userNotifs = (notifications || []).filter((n) => n.userId === currentUser.id);
-  const unreadCount = userNotifs.filter((n) => !n.read).length;
+  const handleToggleOpen = () => {
+    setOpen((prev) => !prev);
+  };
 
-  const handleOpen = () => {
-    setOpen(!open);
-    if (!open && unreadCount > 0) {
+  const handleMarkAllRead = () => {
+    markNotificationsRead();
+  };
+
+  const handleItemClick = (notif) => {
+    // If notif is unread, mark all or this one read
+    if (!notif.read) {
       markNotificationsRead();
+    }
+    setOpen(false);
+    if (notif.link) {
+      navigate(notif.link);
     }
   };
 
-  const handleItemClick = (link) => {
-    setOpen(false);
-    if (link) navigate(link);
-  };
+  const displayedNotifs =
+    activeTab === 'unread'
+      ? userNotifs.filter((n) => !n.read)
+      : userNotifs;
 
-  const getIcon = (type) => {
+  // Notification Icon based on spec:
+  // - mint circle with green-900 icon for normal
+  // - black circle with green-400 icon for session confirmed or reminders
+  // - snow circle with ink icon for messages
+  const renderIconCircle = (type) => {
     switch (type) {
       case 'session_accepted':
-      case 'session_requested':
-      case 'session_rescheduled':
-        return <Calendar className="size-4 text-[#E0A030]" weight="regular" />;
+      case 'reminder':
+      case 'session_confirmed':
+        return (
+          <div className="size-9 rounded-full bg-[var(--ink)] text-[var(--green-400)] flex items-center justify-center shrink-0">
+            <CalendarCheck className="size-4.5" weight="bold" />
+          </div>
+        );
       case 'new_message':
-        return <ChatCircle className="size-4 text-[#E0A030]" weight="regular" />;
+        return (
+          <div className="size-9 rounded-full bg-[var(--snow)] text-[var(--ink)] border border-[var(--line)] flex items-center justify-center shrink-0">
+            <ChatCircle className="size-4.5" weight="bold" />
+          </div>
+        );
       case 'feedback_due':
       case 'feedback_received':
-        return <Star className="size-4 text-[#E0A030]" weight="regular" />;
+        return (
+          <div className="size-9 rounded-full bg-[var(--mint)] text-[var(--green-900)] flex items-center justify-center shrink-0">
+            <Star className="size-4.5" weight="bold" />
+          </div>
+        );
+      case 'session_requested':
+        return (
+          <div className="size-9 rounded-full bg-[var(--mint)] text-[var(--green-900)] flex items-center justify-center shrink-0">
+            <Clock className="size-4.5" weight="bold" />
+          </div>
+        );
+      case 'mentor_approved':
+        return (
+          <div className="size-9 rounded-full bg-[var(--mint)] text-[var(--green-900)] flex items-center justify-center shrink-0">
+            <Sparkle className="size-4.5" weight="bold" />
+          </div>
+        );
       default:
-        return <Bell className="size-4 text-[#E0A030]" weight="regular" />;
+        return (
+          <div className="size-9 rounded-full bg-[var(--mint)] text-[var(--green-900)] flex items-center justify-center shrink-0">
+            <Bell className="size-4.5" weight="bold" />
+          </div>
+        );
     }
   };
 
   return (
-    <div className="relative">
+    <div className="relative inline-block text-left">
+      {/* Bell Trigger:
+          - 40px round button, white background, 1px --line border, black bell icon (Phosphor weight "bold").
+          - Hover: background changes to --snow only.
+          - Focus ring 2px green-600.
+          - Aria label: "Notifications, N unread".
+          - On a dark navbar context, .band-dark overrides ensure white bell on round --gray-600 border.
+      */}
       <button
+        ref={bellButtonRef}
         type="button"
-        onClick={handleOpen}
-        aria-label="View notifications"
-        className="relative p-2 rounded-[6px] text-[#F7F4EE] border border-[#1F3C6B] bg-[#0A1628] hover:bg-[#1F3C6B] transition-colors cursor-pointer flex items-center justify-center"
+        onClick={handleToggleOpen}
+        aria-label={`Notifications, ${unreadCount} unread`}
+        aria-expanded={open}
+        aria-haspopup="true"
+        className="size-10 rounded-full bg-[var(--white)] border border-[var(--line)] hover:bg-[var(--snow)] text-[var(--ink)] flex items-center justify-center cursor-pointer transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--green-600)] in-[.band-dark]:bg-black in-[.band-dark]:border-[var(--gray-600)] in-[.band-dark]:text-white in-[.band-dark]:hover:bg-white/10"
       >
-        <Bell className="size-4" weight="regular" />
+        <Bell className="size-5" weight="bold" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 size-4 rounded-full bg-[#E0A030] text-[#0A1628] text-[9px] font-bold flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 size-5 rounded-full bg-[var(--green-400)] text-[var(--ink)] font-bold text-[10px] flex items-center justify-center leading-none border border-white">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
+      {/* Dropdown panel:
+          - White background, 1px --line border, radius 20px, width 380px (full width minus 16px margin on mobile: w-[calc(100vw-32px)] sm:w-[380px]),
+          - max height 70vh with vertical scroll, opens under the bell aligned right.
+          - Fade in over 150ms only (dropdown-fade-in respects prefers-reduced-motion).
+      */}
       {open && (
         <div
-          className="absolute right-0 mt-2 w-80 sm:w-88 rounded-[10px] bg-[#0F2240] border border-[#1F3C6B] p-3 shadow-lg text-xs z-50 text-[#F7F4EE]"
-          onMouseLeave={() => setOpen(false)}
+          ref={panelRef}
+          role="menu"
+          aria-label="Notifications list"
+          className="dropdown-fade-in absolute right-0 mt-2 w-[calc(100vw-32px)] sm:w-[380px] max-h-[70vh] bg-[var(--white)] border border-[var(--line)] rounded-[20px] shadow-sm flex flex-col z-50 overflow-hidden text-left"
         >
-          <div className="flex items-center justify-between pb-2 border-b border-[#1F3C6B] px-1">
-            <div className="flex items-center gap-1.5 font-heading font-semibold text-sm text-[#F7F4EE]">
-              <span>Notifications</span>
-              {unreadCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-[4px] bg-[#E0A030] text-[#0A1628] text-[10px] font-bold">
-                  {unreadCount} new
-                </span>
-              )}
-            </div>
+          {/* Header Row: "Notifications" in bold ink text on left, "Mark all as read" text button in green-600 on right (underline on hover). Thin --line rule under */}
+          <div className="p-4 pb-3 border-b border-[var(--line)] flex items-center justify-between">
+            <h3 className="font-bold text-base text-[var(--ink)]">
+              Notifications
+            </h3>
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                className="text-xs font-semibold text-[var(--green-600)] hover:underline cursor-pointer transition-colors"
+              >
+                Mark all as read
+              </button>
+            )}
+          </div>
+
+          {/* Tabs under the header: "All" and "Unread" small pill tabs (black fill with white text when active, white with 1px border when inactive) */}
+          <div className="px-4 py-2.5 border-b border-[var(--line)] flex items-center gap-2 bg-white">
             <button
               type="button"
-              onClick={markNotificationsRead}
-              className="text-[11px] text-[#E0A030] hover:underline flex items-center gap-1 cursor-pointer"
+              onClick={() => setActiveTab('all')}
+              className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'all'
+                  ? 'bg-[var(--ink)] text-[var(--white)]'
+                  : 'bg-[var(--white)] text-[var(--ink)] border border-[var(--line)] hover:bg-[var(--snow)]'
+              }`}
             >
-              <Check className="size-3" weight="bold" />
-              <span>Mark read</span>
+              All ({userNotifs.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('unread')}
+              className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'unread'
+                  ? 'bg-[var(--ink)] text-[var(--white)]'
+                  : 'bg-[var(--white)] text-[var(--ink)] border border-[var(--line)] hover:bg-[var(--snow)]'
+              }`}
+            >
+              Unread ({unreadCount})
             </button>
           </div>
 
-          <div className="max-h-72 overflow-y-auto divide-y divide-[#1F3C6B]/50 py-1">
-            {userNotifs.length > 0 ? (
-              userNotifs.map((n) => (
-                <div
-                  key={n.id}
-                  onClick={() => handleItemClick(n.link)}
-                  className={`p-2.5 rounded-[6px] transition-colors cursor-pointer text-left flex gap-2.5 ${
-                    n.read ? 'hover:bg-[#1F3C6B]/40 opacity-70' : 'bg-[#1F3C6B]/30 hover:bg-[#1F3C6B]/60 font-medium'
-                  }`}
-                >
-                  <div className="size-7 rounded-[4px] bg-[#0A1628] border border-[#1F3C6B] flex items-center justify-center shrink-0 mt-0.5">
-                    {getIcon(n.type)}
+          {/* Notifications List (scrollable) */}
+          <div className="flex-1 overflow-y-auto divide-y divide-[var(--line)]">
+            {displayedNotifs.length > 0 ? (
+              displayedNotifs.map((notif) => {
+                const isUnread = !notif.read;
+                return (
+                  <div
+                    key={notif.id}
+                    role="menuitem"
+                    tabIndex={0}
+                    onClick={() => handleItemClick(notif)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleItemClick(notif);
+                      }
+                    }}
+                    className={`p-3.5 flex items-start gap-3 transition-colors cursor-pointer text-left focus:outline-none focus:bg-[var(--snow)] ${
+                      isUnread
+                        ? 'bg-[var(--mint)] hover:bg-[var(--snow)]'
+                        : 'bg-[var(--white)] hover:bg-[var(--snow)]'
+                    }`}
+                  >
+                    {/* 36px icon circle */}
+                    {renderIconCircle(notif.type)}
+
+                    <div className="flex-1 min-w-0 pr-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-[15px] text-[var(--ink)] truncate">
+                          {notif.title}
+                        </p>
+                        {isUnread && (
+                          <span
+                            aria-label="Unread"
+                            className="size-2 rounded-full bg-[var(--green-600)] shrink-0"
+                          />
+                        )}
+                      </div>
+                      <p className="text-[14px] text-[var(--gray-600)] truncate mt-0.5 leading-snug">
+                        {notif.message}
+                      </p>
+                      <p className="text-[12px] text-[var(--gray-600)] mt-1">
+                        {formatTimeAgo(notif.createdAt)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 space-y-0.5 min-w-0">
-                    <p className="font-semibold text-[#F7F4EE] truncate text-[11px]">{n.title}</p>
-                    <p className="text-[#9DB8D6] line-clamp-2 text-[10px] leading-relaxed">
-                      {n.message}
-                    </p>
-                    <p className="text-[#9DB8D6]/60 text-[9px] pt-0.5">{formatTimeAgo(n.createdAt)}</p>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
-              <div className="py-8 text-center text-[#9DB8D6] space-y-1">
-                <Bell className="size-6 text-[#9DB8D6]/40 mx-auto" weight="regular" />
-                <p className="text-xs">No notifications yet</p>
+              /* Empty state: one plain sentence "You are all caught up." in --gray-600 and nothing else, no illustration */
+              <div className="py-10 px-4 text-center">
+                <p className="text-sm text-[var(--gray-600)]">
+                  You are all caught up.
+                </p>
               </div>
             )}
           </div>
 
-          <div className="pt-2 border-t border-[#1F3C6B] text-center">
-            <button
-              type="button"
-              onClick={() => handleItemClick('/sessions')}
-              className="text-[11px] text-[#E0A030] hover:underline flex items-center justify-center gap-1 w-full py-1 cursor-pointer font-semibold"
+          {/* Footer: full width text link "View my sessions" in green-600 under a --line rule */}
+          <div className="p-3 border-t border-[var(--line)] text-center bg-white">
+            <Link
+              to="/sessions"
+              onClick={() => setOpen(false)}
+              className="text-xs font-semibold text-[var(--green-600)] hover:underline inline-block w-full py-1 cursor-pointer transition-colors"
             >
-              <span>Go to My Sessions</span>
-              <ArrowRight className="size-3" weight="regular" />
-            </button>
+              View my sessions
+            </Link>
           </div>
         </div>
       )}

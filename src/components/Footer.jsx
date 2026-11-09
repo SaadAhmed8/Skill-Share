@@ -1,33 +1,36 @@
 // src/components/Footer.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
+import { Logo } from './Logo';
 
 export function Footer() {
+  const { getPlatformFeedbackStats } = useApp();
+  const pfStats = getPlatformFeedbackStats ? getPlatformFeedbackStats() : { rating: 4.8, count: 13 };
+
   return (
     <footer className="w-full bg-[var(--ink)] text-white py-16 px-4 sm:px-6 lg:px-8 border-t border-white/10">
       <div className="mx-auto max-w-6xl">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 lg:gap-12 text-sm text-[var(--gray-400)]">
           {/* Brand */}
           <div className="md:col-span-2 space-y-4">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="size-8 rounded-full bg-white text-[var(--ink)] flex items-center justify-center font-bold text-sm">
-                S
-              </div>
-              <div>
-                <span className="font-bold text-xl tracking-tight text-white">
-                  Skill Share
-                </span>
-                <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-[var(--green-400)] font-bold">
-                  NED
-                </span>
-              </div>
+            <Link to="/" className="inline-block group text-left">
+              <Logo
+                className="[&_span]:text-white [&_circle]:fill-white [&_text]:fill-[var(--ink)] [&_span:last-child]:text-[var(--green-400)]"
+              />
             </Link>
             <p className="max-w-md text-[var(--gray-400)] leading-relaxed text-xs sm:text-sm">
               A free peer mentoring platform connecting juniors with senior students at NED University of Engineering &amp; Technology for one-on-one subject guidance.
             </p>
-            <p className="text-xs text-[var(--green-400)] font-semibold">
-              Civics and Community Engagement Course Project
-            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-xs text-[var(--green-400)] font-semibold">
+                Civics and Community Engagement Course Project
+              </span>
+              <span className="text-white/30">•</span>
+              <span className="text-xs text-white/80 font-medium">
+                Platform rating {pfStats.rating.toFixed(1)} from {pfStats.count} reviews
+              </span>
+            </div>
           </div>
 
           {/* Quick Nav */}

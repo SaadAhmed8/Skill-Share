@@ -3,13 +3,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from '@phosphor-icons/react';
 import { cn, getSubjectName } from '../lib/utils';
+import { useApp } from '../context/AppContext';
 
 export function MentorCard({
   mentor,
   highlightSubject = '',
   className = '',
 }) {
-  const isNew = mentor.isNew || !mentor.ratingCount;
+  const { getMentorStats } = useApp();
+  const stats = getMentorStats ? getMentorStats(mentor.id) : null;
+  const ratingCount = stats ? stats.reviewCount : mentor.ratingCount || 0;
+  const rating = stats && stats.reviewCount > 0 ? stats.rating : mentor.rating || 0;
+  const hoursTaught = stats ? stats.hoursTaught : mentor.hoursTaught || 0;
+  const isNew = mentor.isNew || !ratingCount;
   const initials = mentor.name
     .split(' ')
     .map((n) => n[0])
@@ -51,8 +57,8 @@ export function MentorCard({
                 </span>
               ) : (
                 <span className="text-xs text-[#A86F10] font-bold">
-                  ★ {mentor.rating.toFixed(1)}
-                  <span className="text-[#11203A]/50 font-normal"> ({mentor.ratingCount})</span>
+                  ★ {rating.toFixed(1)}
+                  <span className="text-[#11203A]/50 font-normal"> ({ratingCount})</span>
                 </span>
               )}
             </div>
@@ -77,7 +83,7 @@ export function MentorCard({
       {/* Footer Info: Volunteer Hours + Profile Link */}
       <div className="pt-3 border-t border-[#11203A]/10 flex items-center justify-between text-xs">
         <span className="text-[#11203A]/70">
-          <strong className="text-[#0F2240]">{mentor.hoursTaught || 0}</strong> hours taught
+          <strong className="text-[#0F2240]">{hoursTaught}</strong> hours taught
         </span>
 
         <Link

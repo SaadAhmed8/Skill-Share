@@ -2,8 +2,6 @@
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
   --font-heading: 'Instrument Sans Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-sans: 'Instrument Sans Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -221,7 +219,10 @@
     overflow-x: hidden;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-heading);
     font-weight: 700;
     letter-spacing: -0.03em;
@@ -253,9 +254,101 @@
 
   .band-light :focus-visible,
   .band-light-alt :focus-visible,
-  body > :focus-visible {
+  body> :focus-visible {
     outline: 2px solid var(--green-600);
     outline-offset: 2px;
+  }
+}
+
+/* Page transitions & route progress bar */
+@keyframes routeProgress {
+  0% {
+    width: 0%;
+    opacity: 1;
+  }
+
+  80% {
+    width: 85%;
+    opacity: 1;
+  }
+
+  100% {
+    width: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.route-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background-color: #000000;
+  z-index: 9999;
+  pointer-events: none;
+  animation: routeProgress 300ms ease-out forwards;
+}
+
+.page-fade-in {
+  animation: pageFadeIn 250ms ease-out forwards;
+  will-change: opacity, transform;
+}
+
+.tab-panel-fade {
+  animation: tabFadeIn 150ms ease-out forwards;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.dropdown-fade-in {
+  animation: dropdownFadeIn 150ms ease-out forwards;
+}
+
+.home-screen-fade {
+  animation: tabFadeIn 250ms ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .route-progress-bar,
+  .page-fade-in,
+  .tab-panel-fade,
+  .dropdown-fade-in,
+  .home-screen-fade {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
   }
 }
 
@@ -269,9 +362,12 @@
   body * {
     visibility: hidden;
   }
-  .print-certificate, .print-certificate * {
+
+  .print-certificate,
+  .print-certificate * {
     visibility: visible;
   }
+
   .print-certificate {
     position: absolute;
     left: 0;
@@ -285,6 +381,7 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
   .no-print {
     display: none !important;
   }
