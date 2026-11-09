@@ -12,10 +12,11 @@ import {
 import { generateSeedData } from '../data/seedReviews';
 import { validateUniversityEmail } from '../lib/validators';
 import { generatePlatformMeetingLink } from '../lib/utils';
+import { getMentorStats as computeMentorStats } from '../lib/mentorStats';
 
 const AppContext = createContext(null);
 
-const DATA_VERSION = 'v3_certificate_rebuild';
+const DATA_VERSION = 'v4_mentor_stats_unified';
 
 const STORAGE_KEYS = {
   DATA_VERSION: 'skillshare_data_version',
@@ -109,10 +110,24 @@ export function AppProvider({ children }) {
     const savedVersion = localStorage.getItem(STORAGE_KEYS.DATA_VERSION);
     const saved = localStorage.getItem(STORAGE_KEYS.MENTORS);
     if (savedVersion !== DATA_VERSION) {
-      localStorage.setItem(STORAGE_KEYS.MENTORS, JSON.stringify(initialMentors));
-      return initialMentors;
+      let existing = [];
+      if (saved) {
+        try {
+          existing = JSON.parse(saved);
+        } catch (e) { }
+      }
+      const initialIds = new Set(initialMentors.map((m) => m.id));
+      const userAdded = existing.filter((m) => !initialIds.has(m.id));
+      const merged = [...initialMentors, ...userAdded];
+      localStorage.setItem(STORAGE_KEYS.MENTORS, JSON.stringify(merged));
+      return merged;
     }
-    return saved ? JSON.parse(saved) : initialMentors;
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) { }
+    }
+    return initialMentors;
   });
 
   const [sessionRequests, setSessionRequests] = useState(() => {
@@ -253,39 +268,12 @@ export function AppProvider({ children }) {
     return reviews.filter((r) => r.mentorId === mentorId);
   };
 
-  const getMentorStats = (mentorId) => {
-    const mentorObj = mentors.find((m) => m.id === mentorId);
-    const mentorReviews = reviews.filter((r) => r.mentorId === mentorId);
-    const mentorCompletedSessions = sessionRequests.filter(
-      (s) => s.mentorId === mentorId && s.status === 'completed'
-    );
-    const count = mentorReviews.length > 0 ? mentorReviews.length : mentorObj?.ratingCount || 0;
-    let avg = mentorObj?.rating || 0;
-    if (mentorReviews.length > 0) {
-      const sum = mentorReviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
-      avg = Number((sum / mentorReviews.length).toFixed(2));
-    }
-    const sessionHours = mentorCompletedSessions.length > 0
-      ? mentorCompletedSessions.reduce(
-          (acc, s) => acc + (Number(s.durationMinutes) || 60) / 60,
-          0
-        )
-      : mentorObj?.hoursTaught || 0;
-
-    const uniqueStudents = new Set(
-      mentorCompletedSessions.map((s) => s.studentId).filter(Boolean)
-    );
-    const studentsTaught = uniqueStudents.size > 0
-      ? uniqueStudents.size
-      : Math.max(1, Math.round(count * 0.8));
-
-    return {
-      reviewCount: count,
-      rating: avg,
-      hoursTaught: Math.round(sessionHours),
-      completedSessionsCount: mentorCompletedSessions.length || count,
-      studentsTaught,
-    };
+  const getMentorStats = (mentorOrId) => {
+    const mentorObj =
+      typeof mentorOrId === 'object' && mentorOrId !== null
+        ? mentorOrId
+        : mentors.find((m) => m.id === mentorOrId);
+    return computeMentorStats(mentorObj, reviews, sessionRequests);
   };
 
   const getMentorSessions = (mentorId) => {
@@ -318,7 +306,8 @@ export function AppProvider({ children }) {
       userId: currentUser.id,
       name: currentUser.name,
       email: currentUser.email,
-      rating: 0,
+      rating: null,
+      reviewCount: 0,
       ratingCount: 0,
       hoursTaught: 0,
       sessionsCount: 0,
@@ -869,16 +858,18 @@ export function AppProvider({ children }) {
       prev.map((s) => (s.id === sessionId ? { ...s, feedbackGiven: true } : s))
     );
 
-    // 3. Update mentor object rating, ratingCount, isNew
+    // 3. Update mentor object rating, reviewCount, ratingCount, isNew
     setMentors((prev) =>
       prev.map((m) => {
         if (m.id === mentorId) {
-          const nextCount = (m.ratingCount || 0) + 1;
-          const currentTotal = (m.rating || 0) * (m.ratingCount || 0);
-          const newAvg = Number(((currentTotal + avgRating) / nextCount).toFixed(2));
+          const prevCount = m.reviewCount ?? m.ratingCount ?? 0;
+          const nextCount = prevCount + 1;
+          const currentTotal = (m.rating || 0) * prevCount;
+          const newAvg = Number(((currentTotal + avgRating) / nextCount).toFixed(1));
           return {
             ...m,
             rating: newAvg,
+            reviewCount: nextCount,
             ratingCount: nextCount,
             isNew: false,
           };
@@ -1072,15 +1063,20 @@ export function AppProvider({ children }) {
   };
 
   // Dynamic Statistics
+  const totalVolunteerHours = mentors.reduce((acc, m) => {
+    const ms = getMentorStats(m);
+    return acc + ms.hoursTaught;
+  }, 0);
+  const totalCompletedSessions = sessionRequests.filter((s) => s.status === 'completed').length;
+
   const stats = {
     totalUsers: users.length,
     approvedMentors: mentors.filter((m) => m.status === 'approved' && !m.suspended).length,
     pendingMentors: mentors.filter((m) => m.status === 'pending').length,
-    totalSessions: sessionRequests.filter((s) => s.status === 'completed').length,
-    totalVolunteerHours: mentors.reduce((acc, m) => {
-      const ms = getMentorStats(m.id);
-      return acc + (ms.hoursTaught || m.hoursTaught || 0);
-    }, 0),
+    totalSessions: totalCompletedSessions,
+    completedSessions: totalCompletedSessions,
+    totalVolunteerHours,
+    totalHours: totalVolunteerHours,
     openReports: reports.filter((r) => r.status === 'Open').length,
   };
 

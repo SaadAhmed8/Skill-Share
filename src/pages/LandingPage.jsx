@@ -28,6 +28,8 @@ import {
 import { useApp } from '../context/AppContext';
 import { featuredSubjects } from '../data/mockData';
 import { getSubjectName, getSubjectId } from '../lib/utils';
+import { getMentorStats } from '../lib/mentorStats';
+import { rankMentors } from '../lib/ranking';
 
 // Visual Strip / Tiles
 function TileStrip() {
@@ -108,7 +110,15 @@ function TileStrip() {
 }
 
 export function LandingPage() {
-  const { currentUser, mentors, stats, platformFeedback, getPlatformFeedbackStats } = useApp();
+  const {
+    currentUser,
+    mentors,
+    reviews,
+    sessionRequests,
+    stats,
+    platformFeedback,
+    getPlatformFeedbackStats,
+  } = useApp();
   const [openFaq, setOpenFaq] = useState(null);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const navigate = useNavigate();
@@ -124,10 +134,17 @@ export function LandingPage() {
     if (feedbackDistribution[star] !== undefined) feedbackDistribution[star]++;
   });
 
-  // Top mentors for preview (4 rows)
-  const topMentors = mentors
-    .filter((m) => m.status === 'approved')
-    .slice(0, 4);
+  // Top mentors for preview (top 4 approved and not suspended, ranked by feedback, preferring mentors with > 0 reviews)
+  const approvedAndActive = mentors.filter((m) => m.status === 'approved' && !m.suspended);
+  const withReviews = approvedAndActive.filter(
+    (m) => getMentorStats(m, reviews, sessionRequests).reviewCount > 0
+  );
+  const withoutReviews = approvedAndActive.filter(
+    (m) => getMentorStats(m, reviews, sessionRequests).reviewCount === 0
+  );
+  const rankedWithReviews = rankMentors(withReviews, 'best_match', reviews, sessionRequests);
+  const rankedWithoutReviews = rankMentors(withoutReviews, 'best_match', reviews, sessionRequests);
+  const topMentors = [...rankedWithReviews, ...rankedWithoutReviews].slice(0, 4);
 
   // FAQ items
   const faqs = [
@@ -349,6 +366,8 @@ export function LandingPage() {
                 .map((n) => n[0])
                 .join('')
                 .slice(0, 2);
+              const mStats = getMentorStats(m, reviews, sessionRequests);
+              const hasReviews = mStats.reviewCount > 0 && mStats.rating !== null;
               return (
                 <div
                   key={m.id}
@@ -383,13 +402,21 @@ export function LandingPage() {
                         <div className="size-7 rounded-full bg-[var(--mint)] text-[var(--green-900)] flex items-center justify-center">
                           <Star className="size-3.5" weight="fill" />
                         </div>
-                        <span>{m.rating > 0 ? m.rating.toFixed(1) : 'New'} ({m.reviewCount || 0})</span>
+                        {hasReviews ? (
+                          <span>
+                            {mStats.rating.toFixed(1)} ({mStats.reviewCount})
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full bg-[var(--mint)] text-[var(--green-900)] text-[10px] font-bold uppercase tracking-wider">
+                            New Mentor
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 text-[var(--gray-600)]">
                         <div className="size-7 rounded-full bg-[var(--snow)] text-[var(--ink)] flex items-center justify-center">
                           <Clock className="size-3.5" weight="bold" />
                         </div>
-                        <span>{m.hoursCompleted || 0} hrs</span>
+                        <span>{mStats.hoursTaught} hrs</span>
                       </div>
                     </div>
 

@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from '@phosphor-icons/react';
 import { cn, getSubjectName } from '../lib/utils';
+import { getMentorStats } from '../lib/mentorStats';
 import { useApp } from '../context/AppContext';
 
 export function MentorCard({
@@ -10,12 +11,10 @@ export function MentorCard({
   highlightSubject = '',
   className = '',
 }) {
-  const { getMentorStats } = useApp();
-  const stats = getMentorStats ? getMentorStats(mentor.id) : null;
-  const ratingCount = stats ? stats.reviewCount : mentor.ratingCount || 0;
-  const rating = stats && stats.reviewCount > 0 ? stats.rating : mentor.rating || 0;
-  const hoursTaught = stats ? stats.hoursTaught : mentor.hoursTaught || 0;
-  const isNew = mentor.isNew || !ratingCount;
+  const { reviews, sessionRequests } = useApp();
+  const stats = getMentorStats(mentor, reviews, sessionRequests);
+  const { rating, reviewCount, hoursTaught } = stats;
+  const isNew = mentor.isNew || reviewCount === 0 || rating === null;
   const initials = mentor.name
     .split(' ')
     .map((n) => n[0])
@@ -53,12 +52,12 @@ export function MentorCard({
               </h3>
               {isNew ? (
                 <span className="px-2 py-0.5 rounded-[4px] bg-[#E0A030] text-[#0A1628] text-[10px] font-bold uppercase tracking-wider">
-                  New
+                  New Mentor
                 </span>
               ) : (
                 <span className="text-xs text-[#A86F10] font-bold">
                   ★ {rating.toFixed(1)}
-                  <span className="text-[#11203A]/50 font-normal"> ({ratingCount})</span>
+                  <span className="text-[#11203A]/50 font-normal"> ({reviewCount})</span>
                 </span>
               )}
             </div>

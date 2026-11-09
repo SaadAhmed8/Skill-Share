@@ -162,12 +162,12 @@ export function generateSeedData(mentors) {
   const eightMonthsMs = 240 * 24 * 60 * 60 * 1000;
 
   mentors.forEach((mentor, mentorIndex) => {
+    const count = mentor.reviewCount ?? mentor.ratingCount ?? 0;
     // Only approved mentors with reviewCount > 0 get reviews
-    if (mentor.status !== "approved" || mentor.isNew || !mentor.ratingCount || mentor.ratingCount <= 0) {
+    if (mentor.status !== "approved" || mentor.isNew || count <= 0) {
       return;
     }
 
-    const count = mentor.ratingCount;
     const targetRating = mentor.rating || 4.9;
     const rng = createRng(mentorIndex * 777 + count * 13);
 

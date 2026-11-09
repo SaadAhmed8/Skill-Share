@@ -21,6 +21,7 @@ import {
 } from '../components/ui/sheet';
 import { useApp } from '../context/AppContext';
 import { rankMentors } from '../lib/ranking';
+import { getMentorStats } from '../lib/mentorStats';
 import { featuredSubjects } from '../data/mockData';
 import { getSubjectName } from '../lib/utils';
 
@@ -41,7 +42,7 @@ const DAYS = ['Any Day', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function MentorsListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { getApprovedMentors, getMentorStats } = useApp();
+  const { getApprovedMentors, reviews, sessionRequests } = useApp();
 
   const urlSubject = searchParams.get('subject') || '';
   const urlQuery = searchParams.get('q') || searchParams.get('search') || '';
@@ -149,40 +150,32 @@ export function MentorsListPage() {
         if (String(m.year) !== String(selectedYear)) return false;
       }
 
+      const mStats = getMentorStats(m, reviews, sessionRequests);
+
       if (minRating !== 'all') {
         const min = parseFloat(minRating);
-        if ((m.rating || 0) < min) return false;
+        if ((mStats.rating || 0) < min) return false;
       }
 
       if (selectedDay !== 'Any Day') {
-        const hasDay = m.availability?.some((a) => a.day === selectedDay);
+        const hasDay = m.availability?.some((a) =>
+          typeof a === 'string' ? a.startsWith(selectedDay) : a.day === selectedDay
+        );
         if (!hasDay) return false;
       }
 
       if (newMentorsOnly) {
-        if (!m.isNew && (m.ratingCount || 0) > 0) return false;
+        if (!m.isNew && mStats.reviewCount > 0) return false;
       }
 
       return true;
     });
 
-    if (sortBy === 'best_match') {
-      return rankMentors(list);
-    } else if (sortBy === 'highest_rated') {
-      return [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    } else if (sortBy === 'most_hours') {
-      return [...list].sort(
-        (a, b) => (b.hoursTaught || 0) - (a.hoursTaught || 0)
-      );
-    } else if (sortBy === 'fastest_response') {
-      return [...list].sort(
-        (a, b) => (a.responseHours || 99) - (b.responseHours || 99)
-      );
-    }
-
-    return list;
+    return rankMentors(list, sortBy, reviews, sessionRequests);
   }, [
     approvedMentors,
+    reviews,
+    sessionRequests,
     searchQuery,
     selectedSubject,
     selectedDept,
@@ -220,11 +213,10 @@ export function MentorsListPage() {
               key={yr}
               type="button"
               onClick={() => setSelectedYear(yr)}
-              className={`py-2 rounded-full text-center border font-semibold transition-colors ${
-                selectedYear === yr
+              className={`py-2 rounded-full text-center border font-semibold transition-colors ${selectedYear === yr
                   ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
                   : 'bg-white border-[var(--line)] text-[var(--gray-600)] hover:bg-[var(--snow)]'
-              }`}
+                }`}
             >
               {yr === 'all' ? 'All' : `Yr ${yr}`}
             </button>
@@ -245,11 +237,10 @@ export function MentorsListPage() {
               key={r.val}
               type="button"
               onClick={() => setMinRating(r.val)}
-              className={`py-2 rounded-full text-center border font-semibold transition-colors ${
-                minRating === r.val
+              className={`py-2 rounded-full text-center border font-semibold transition-colors ${minRating === r.val
                   ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
                   : 'bg-white border-[var(--line)] text-[var(--gray-600)] hover:bg-[var(--snow)]'
-              }`}
+                }`}
             >
               {r.label}
             </button>
@@ -325,11 +316,10 @@ export function MentorsListPage() {
                   key={subjId}
                   type="button"
                   onClick={() => handleQuickSubjectClick(subjName)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                    isSelected
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isSelected
                       ? 'bg-[var(--green-400)] text-[var(--ink)] border-[var(--green-400)]'
                       : 'bg-[#181818] text-white border-white/10 hover:border-white/30'
-                  }`}
+                    }`}
                 >
                   {subjName}
                 </button>
@@ -413,11 +403,9 @@ export function MentorsListPage() {
               <div className="bg-white border border-[var(--line)] rounded-[28px] overflow-hidden divide-y divide-[var(--line)]">
                 {filteredMentors.map((m) => {
                   const initials = m.name.split(' ').map((n) => n[0]).join('').slice(0, 2);
-                  const stats = getMentorStats ? getMentorStats(m.id) : null;
-                  const ratingCount = stats ? stats.reviewCount : m.ratingCount || 0;
-                  const rating = stats && stats.reviewCount > 0 ? stats.rating : m.rating || 0;
-                  const hoursTaught = stats ? stats.hoursTaught : m.hoursTaught || 0;
-                  const isNew = m.isNew || !ratingCount;
+                  const stats = getMentorStats(m, reviews, sessionRequests);
+                  const { rating, reviewCount, hoursTaught } = stats;
+                  const isNew = m.isNew || reviewCount === 0 || rating === null;
 
                   return (
                     <div
@@ -438,7 +426,7 @@ export function MentorsListPage() {
                             <span className="text-xs text-[var(--gray-600)]">({m.department}, Year {m.year})</span>
                             {isNew && (
                               <span className="px-2.5 py-0.5 rounded-full bg-[var(--mint)] text-[var(--green-900)] text-[10px] font-bold uppercase tracking-wider">
-                                New
+                                New Mentor
                               </span>
                             )}
                           </div>
@@ -470,7 +458,7 @@ export function MentorsListPage() {
                             <Star className="size-3.5" weight="fill" />
                           </div>
                           <span>
-                            {rating > 0 ? `${rating.toFixed(1)} (${ratingCount})` : 'New'}
+                            {!isNew ? `${rating.toFixed(1)} (${reviewCount})` : 'New Mentor'}
                           </span>
                         </div>
 

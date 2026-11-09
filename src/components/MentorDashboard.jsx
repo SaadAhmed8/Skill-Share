@@ -21,6 +21,7 @@ import {
 import { CertificateModal } from './CertificateModal';
 import { useApp } from '../context/AppContext';
 import { getSubjectName, CERTIFICATE_MIN_HOURS } from '../lib/utils';
+import { getMentorStats } from '../lib/mentorStats';
 import { toast } from 'sonner';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -30,6 +31,8 @@ export function MentorDashboard() {
   const {
     currentUser,
     mentors,
+    reviews,
+    sessionRequests,
     getUserSessions,
     updateAvailability,
     addResource,
@@ -125,17 +128,18 @@ export function MentorDashboard() {
   };
 
   const initials = mentor?.name ? mentor.name.split(' ').map((n) => n[0]).join('').slice(0, 2) : 'ME';
-  const hours = mentor?.hoursTaught || 0;
-  const rating = mentor?.rating || 0;
-  const ratingCount = mentor?.ratingCount || 0;
+  const mentorStats = getMentorStats(mentor, reviews, sessionRequests);
+  const hours = mentorStats.hoursTaught;
+  const rating = mentorStats.rating;
+  const ratingCount = mentorStats.reviewCount;
 
   const badges = [
     {
       id: 'first_session',
       title: 'First Step',
       desc: 'Completed first 1-on-1 session',
-      unlocked: completedSessions.length >= 1,
-      progress: completedSessions.length >= 1 ? 100 : (completedSessions.length / 1) * 100,
+      unlocked: mentorStats.completedSessions >= 1,
+      progress: mentorStats.completedSessions >= 1 ? 100 : 0,
     },
     {
       id: 'cert_hours',
@@ -148,7 +152,7 @@ export function MentorDashboard() {
       id: 'top_rated',
       title: 'Top Rated Mentor',
       desc: '4.8+ rating with 5+ reviews',
-      unlocked: rating >= 4.8 && ratingCount >= 5,
+      unlocked: (rating || 0) >= 4.8 && ratingCount >= 5,
       progress: ratingCount >= 5 ? 100 : (ratingCount / 5) * 100,
     },
     {
@@ -232,10 +236,10 @@ export function MentorDashboard() {
 
           <div className="p-5 rounded-[28px] bg-white/5 border border-white/10">
             <p className="font-bold text-3xl text-[var(--green-400)]">
-              {rating > 0 ? rating.toFixed(1) : 'New'}
+              {rating !== null && ratingCount > 0 ? rating.toFixed(1) : 'New Mentor'}
             </p>
             <p className="text-xs uppercase tracking-wider font-semibold text-[var(--gray-400)] mt-1">
-              Rating ({ratingCount})
+              {ratingCount > 0 ? `Rating (${ratingCount})` : 'Rating'}
             </p>
           </div>
         </div>
@@ -397,8 +401,8 @@ export function MentorDashboard() {
                           type="button"
                           onClick={() => toggleSlot(day, slot)}
                           className={`w-full py-2 px-3 rounded-full text-xs font-bold border transition-colors cursor-pointer ${isChecked
-                              ? 'bg-[var(--green-900)] text-white border-[var(--green-900)]'
-                              : 'bg-white border-[var(--line)] text-[var(--gray-600)] hover:bg-[var(--snow)]'
+                            ? 'bg-[var(--green-900)] text-white border-[var(--green-900)]'
+                            : 'bg-white border-[var(--line)] text-[var(--gray-600)] hover:bg-[var(--snow)]'
                             }`}
                         >
                           {isChecked ? 'Available' : 'Unavailable'}
@@ -440,8 +444,8 @@ export function MentorDashboard() {
             <div
               key={b.id}
               className={`p-5 rounded-[28px] border ${b.unlocked
-                  ? 'bg-[#181818] border-[var(--green-400)]/40 text-white'
-                  : 'bg-[#121212] border-white/10 text-white/50'
+                ? 'bg-[#181818] border-[var(--green-400)]/40 text-white'
+                : 'bg-[#121212] border-white/10 text-white/50'
                 }`}
             >
               <div className="flex items-center justify-between mb-1">

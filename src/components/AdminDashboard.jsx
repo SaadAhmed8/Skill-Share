@@ -23,12 +23,14 @@ import { CertificateModal } from './CertificateModal';
 import { useApp } from '../context/AppContext';
 import { MIN_GPA } from '../lib/validators';
 import { getSubjectName, CERTIFICATE_MIN_HOURS } from '../lib/utils';
+import { getMentorStats } from '../lib/mentorStats';
 import { toast } from 'sonner';
 
 export function AdminDashboard() {
   const {
     users,
     mentors,
+    reviews,
     getAllApprovedMentors,
     sessionRequests,
     reports,
@@ -41,7 +43,6 @@ export function AdminDashboard() {
     getDemandBySubject,
     platformFeedback,
     getPlatformFeedbackStats,
-    getMentorStats,
     stats,
   } = useApp();
 
@@ -104,7 +105,13 @@ export function AdminDashboard() {
       ['Approved Mentors', allApproved.length],
       ['Pending Applications', pendingMentors.length],
       ['Completed Sessions', sessionRequests.filter((s) => s.status === 'completed').length],
-      ['Total Volunteer Hours', mentors.reduce((acc, m) => acc + (m.hoursTaught || 0), 0)],
+      [
+        'Total Volunteer Hours',
+        mentors.reduce(
+          (acc, m) => acc + getMentorStats(m, reviews, sessionRequests).hoursTaught,
+          0
+        ),
+      ],
       ['Open Incident Reports', reports.filter((r) => r.status === 'Open').length],
       [],
       ['Demanded Subject', 'Session Requests'],
@@ -254,8 +261,8 @@ export function AdminDashboard() {
                       <td className="py-3.5 px-4">
                         <span
                           className={`inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-full text-[11px] ${app.gpa >= MIN_GPA
-                              ? 'bg-[var(--mint)] text-[var(--green-900)]'
-                              : 'bg-red-50 text-[var(--error)] border border-red-200'
+                            ? 'bg-[var(--mint)] text-[var(--green-900)]'
+                            : 'bg-red-50 text-[var(--error)] border border-red-200'
                             }`}
                         >
                           CGPA: {app.gpa ? app.gpa.toFixed(2) : '3.40'}{' '}
@@ -328,8 +335,8 @@ export function AdminDashboard() {
                 type="button"
                 onClick={() => setReportsTab('reports')}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${reportsTab === 'reports'
-                    ? 'bg-[var(--ink)] text-white'
-                    : 'text-[var(--gray-600)] hover:text-[var(--ink)]'
+                  ? 'bg-[var(--ink)] text-white'
+                  : 'text-[var(--gray-600)] hover:text-[var(--ink)]'
                   }`}
               >
                 Direct Reports ({reports.length})
@@ -338,8 +345,8 @@ export function AdminDashboard() {
                 type="button"
                 onClick={() => setReportsTab('flagged')}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${reportsTab === 'flagged'
-                    ? 'bg-[var(--ink)] text-white'
-                    : 'text-[var(--gray-600)] hover:text-[var(--ink)]'
+                  ? 'bg-[var(--ink)] text-white'
+                  : 'text-[var(--gray-600)] hover:text-[var(--ink)]'
                   }`}
               >
                 Keyword Triggers ({flaggedMessages.length})
@@ -374,8 +381,8 @@ export function AdminDashboard() {
                       <td className="py-3.5 px-4">
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${rep.status === 'Open'
-                              ? 'bg-red-50 text-[var(--error)]'
-                              : 'bg-[var(--mint)] text-[var(--green-900)]'
+                            ? 'bg-red-50 text-[var(--error)]'
+                            : 'bg-[var(--mint)] text-[var(--green-900)]'
                             }`}
                         >
                           {rep.status}
@@ -473,8 +480,8 @@ export function AdminDashboard() {
                   type="button"
                   onClick={() => setSessionLogFilter(flt)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer capitalize ${sessionLogFilter === flt
-                      ? 'bg-[var(--green-400)] text-[var(--ink)]'
-                      : 'border border-white/10 text-white/70 hover:bg-white/10'
+                    ? 'bg-[var(--green-400)] text-[var(--ink)]'
+                    : 'border border-white/10 text-white/70 hover:bg-white/10'
                     }`}
                 >
                   {flt}
@@ -590,30 +597,37 @@ export function AdminDashboard() {
               </h3>
               <div className="space-y-3">
                 {[...allApproved]
-                  .sort((a, b) => (b.hoursTaught || 0) - (a.hoursTaught || 0))
+                  .sort(
+                    (a, b) =>
+                      getMentorStats(b, reviews, sessionRequests).hoursTaught -
+                      getMentorStats(a, reviews, sessionRequests).hoursTaught
+                  )
                   .slice(0, 3)
-                  .map((m, idx) => (
-                    <div
-                      key={m.id}
-                      className="p-4 rounded-[20px] bg-[var(--snow)] border border-[var(--line)] flex items-center justify-between gap-3 text-xs"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="size-7 rounded-full bg-[var(--ink)] text-white font-bold text-xs flex items-center justify-center">
-                          {idx + 1}
+                  .map((m, idx) => {
+                    const mStats = getMentorStats(m, reviews, sessionRequests);
+                    return (
+                      <div
+                        key={m.id}
+                        className="p-4 rounded-[20px] bg-[var(--snow)] border border-[var(--line)] flex items-center justify-between gap-3 text-xs"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="size-7 rounded-full bg-[var(--ink)] text-white font-bold text-xs flex items-center justify-center">
+                            {idx + 1}
+                          </span>
+                          <div className="size-9 rounded-full bg-[var(--green-900)] text-white flex items-center justify-center font-bold text-xs uppercase">
+                            {m.name.slice(0, 2)}
+                          </div>
+                          <div>
+                            <p className="font-bold text-[var(--ink)]">{m.name}</p>
+                            <p className="text-[11px] text-[var(--gray-600)]">{m.department}</p>
+                          </div>
+                        </div>
+                        <span className="font-bold text-sm text-[var(--green-600)]">
+                          {mStats.hoursTaught} Hours
                         </span>
-                        <div className="size-9 rounded-full bg-[var(--green-900)] text-white flex items-center justify-center font-bold text-xs uppercase">
-                          {m.name.slice(0, 2)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-[var(--ink)]">{m.name}</p>
-                          <p className="text-[11px] text-[var(--gray-600)]">{m.department}</p>
-                        </div>
                       </div>
-                      <span className="font-bold text-sm text-[var(--green-600)]">
-                        {m.hoursTaught || 0} Hours
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             </div>
           </div>
@@ -697,8 +711,10 @@ export function AdminDashboard() {
               </thead>
               <tbody className="divide-y divide-white/10 text-white">
                 {allApproved.map((m) => {
-                  const mStats = getMentorStats ? getMentorStats(m.id) : null;
-                  const mHours = mStats?.hoursTaught !== undefined ? mStats.hoursTaught : (m.hoursTaught || 0);
+                  const mStats = getMentorStats(m, reviews, sessionRequests);
+                  const mHours = mStats.hoursTaught;
+                  const mRating = mStats.rating;
+                  const mReviewCount = mStats.reviewCount;
                   const isEligible = mHours >= CERTIFICATE_MIN_HOURS;
 
                   return (
@@ -706,7 +722,9 @@ export function AdminDashboard() {
                       <td className="py-3 px-4 font-bold">{m.name}</td>
                       <td className="py-3 px-4 text-[var(--gray-400)]">{m.department}</td>
                       <td className="py-3 px-4 text-[var(--green-400)] font-bold">
-                        {m.rating > 0 ? `${m.rating.toFixed(1)} ★` : 'New'}
+                        {mRating !== null && mReviewCount > 0
+                          ? `${mRating.toFixed(1)} (${mReviewCount}) ★`
+                          : 'New Mentor'}
                       </td>
                       <td className="py-3 px-4">{mHours} hrs</td>
                       <td className="py-3 px-4">
@@ -741,8 +759,8 @@ export function AdminDashboard() {
                             );
                           }}
                           className={`px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors ${m.suspended
-                              ? 'bg-red-950 text-red-300 border border-red-800'
-                              : 'bg-[var(--green-900)] text-white border border-[var(--green-600)]'
+                            ? 'bg-red-950 text-red-300 border border-red-800'
+                            : 'bg-[var(--green-900)] text-white border border-[var(--green-600)]'
                             }`}
                         >
                           {m.suspended ? 'Suspended (Hidden)' : 'Active (Visible)'}

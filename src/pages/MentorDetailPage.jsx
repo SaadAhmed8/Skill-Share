@@ -18,11 +18,19 @@ import { ReportMentorDialog } from '../components/ReportMentorDialog';
 import { CertificateModal } from '../components/CertificateModal';
 import { useApp } from '../context/AppContext';
 import { getSubjectName } from '../lib/utils';
+import { getMentorStats } from '../lib/mentorStats';
 import { toast } from 'sonner';
 
 export function MentorDetailPage() {
   const { id } = useParams();
-  const { currentUser, getMentorById, getMentorReviews, getMentorSessions, getMentorStats } = useApp();
+  const {
+    currentUser,
+    getMentorById,
+    getMentorReviews,
+    getMentorSessions,
+    reviews: allReviews,
+    sessionRequests,
+  } = useApp();
 
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -57,14 +65,12 @@ export function MentorDetailPage() {
 
   const reviews = getMentorReviews(mentor.id);
   const completedSessions = getMentorSessions(mentor.id);
-  const mentorStats = getMentorStats ? getMentorStats(mentor.id) : null;
+  const mentorStats = getMentorStats(mentor, allReviews, sessionRequests);
 
-  const totalReviews = reviews.length;
-  const ratingAverage = totalReviews > 0
-    ? Number((reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0) / totalReviews).toFixed(1))
-    : 0;
-  const volunteerHours = mentorStats ? mentorStats.hoursTaught : mentor.hoursTaught || 0;
-  const isNew = mentor.isNew || totalReviews === 0;
+  const totalReviews = mentorStats.reviewCount;
+  const ratingAverage = mentorStats.rating;
+  const volunteerHours = mentorStats.hoursTaught;
+  const isNew = mentor.isNew || totalReviews === 0 || ratingAverage === null;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -211,7 +217,7 @@ export function MentorDetailPage() {
       <SectionWrapper variant="light" containerClassName="py-10">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x divide-[var(--line)]">
           <div className="pt-2 sm:pt-0">
-            <p className="font-bold text-4xl text-[var(--ink)]">{mentor.sessionsCount || 0}</p>
+            <p className="font-bold text-4xl text-[var(--ink)]">{mentorStats.studentsTaught}</p>
             <p className="text-xs uppercase tracking-wider font-semibold text-[var(--gray-600)] mt-1">Students Guided</p>
           </div>
 
@@ -497,7 +503,7 @@ export function MentorDetailPage() {
         <div>
           <p className="font-bold text-xs text-white">{mentor.name}</p>
           <p className="text-[10px] text-[var(--green-400)]">
-            {mentor.isNew ? 'New Mentor' : `★ ${mentor.rating.toFixed(1)}`}
+            {isNew ? 'New Mentor' : `★ ${ratingAverage.toFixed(1)} (${totalReviews})`}
           </p>
         </div>
         <button

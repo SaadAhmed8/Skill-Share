@@ -1,4 +1,5 @@
 // src/lib/ranking.js
+import { getMentorStats } from './mentorStats';
 
 /**
  * Mentor Ranking Algorithm (Strictly following docs/spec.md Section 4):
@@ -16,7 +17,7 @@
  *      with 40 sessions and a 4.9 rating.
  * 3. Response time bonus: Faster response times receive a fractional bonus.
  * 4. "New Mentor" fair boost:
- *    New mentors (0 reviews, tagged with isNew: true) are given an fair visibility boost
+ *    New mentors (0 reviews, tagged with isNew: true) are given a fair visibility boost
  *    so they are not buried at the bottom of search results. In sorted listings, new mentors
  *    are fairly interleaved after the top-performing veterans so students can discover and book them.
  */
@@ -24,21 +25,28 @@
 const PRIOR_WEIGHT = 3;
 const PRIOR_RATING = 4.5;
 
-export function computeMentorScore(mentor) {
+export function computeMentorScore(mentor, reviews = null, sessionRequests = null) {
+  const stats = getMentorStats(mentor, reviews, sessionRequests);
+
   // If mentor has no reviews, assign baseline plus new-mentor encouragement boost
-  if (!mentor.ratingCount || mentor.ratingCount === 0 || mentor.isNew) {
+  if (!stats.reviewCount || stats.reviewCount === 0 || mentor.isNew) {
     // Score calibrated to place them fairly around the middle-high tier (equivalent to ~4.6 Bayesian)
     return 4.62;
   }
 
-  const v = mentor.ratingCount || 0;
-  const R = mentor.rating || 0;
+  const v = stats.reviewCount;
+  const R = stats.rating || 0;
 
   // Bayesian average
-  const bayesianRating = (v / (v + PRIOR_WEIGHT)) * R + (PRIOR_WEIGHT / (v + PRIOR_WEIGHT)) * PRIOR_RATING;
+  const bayesianRating =
+    (v / (v + PRIOR_WEIGHT)) * R +
+    (PRIOR_WEIGHT / (v + PRIOR_WEIGHT)) * PRIOR_RATING;
 
   // Session experience bonus (capped at 0.3)
-  const experienceBonus = Math.min((mentor.sessionsCount || mentor.hoursTaught || 0) * 0.008, 0.3);
+  const experienceBonus = Math.min(
+    (stats.completedSessions || stats.hoursTaught || 0) * 0.008,
+    0.3
+  );
 
   // Response time weight
   let responseBonus = 0.05;
@@ -58,20 +66,34 @@ export function computeMentorScore(mentor) {
  * Sort mentors based on the chosen sort criterion
  * @param {Array} mentors List of approved mentors
  * @param {string} sortBy 'best_match' | 'highest_rated' | 'most_hours' | 'fastest_response'
+ * @param {Array} reviews Optional reviews list for live stats calculation
+ * @param {Array} sessionRequests Optional session requests list for live stats calculation
  */
-export function rankMentors(mentors, sortBy = 'best_match') {
+export function rankMentors(
+  mentors,
+  sortBy = 'best_match',
+  reviews = null,
+  sessionRequests = null
+) {
   const list = [...mentors];
 
   if (sortBy === 'highest_rated') {
     return list.sort((a, b) => {
-      // Direct rating comparison, then review count
-      if (b.rating !== a.rating) return b.rating - a.rating;
-      return (b.ratingCount || 0) - (a.ratingCount || 0);
+      const statsA = getMentorStats(a, reviews, sessionRequests);
+      const statsB = getMentorStats(b, reviews, sessionRequests);
+      const rA = statsA.rating ?? 0;
+      const rB = statsB.rating ?? 0;
+      if (rB !== rA) return rB - rA;
+      return statsB.reviewCount - statsA.reviewCount;
     });
   }
 
   if (sortBy === 'most_hours') {
-    return list.sort((a, b) => (b.hoursTaught || 0) - (a.hoursTaught || 0));
+    return list.sort((a, b) => {
+      const statsA = getMentorStats(a, reviews, sessionRequests);
+      const statsB = getMentorStats(b, reviews, sessionRequests);
+      return statsB.hoursTaught - statsA.hoursTaught;
+    });
   }
 
   if (sortBy === 'fastest_response') {
@@ -86,13 +108,15 @@ export function rankMentors(mentors, sortBy = 'best_match') {
       if (lower.includes('2 hour')) return 120;
       return 300;
     };
-    return list.sort((a, b) => parseMinutes(a.responseTime) - parseMinutes(b.responseTime));
+    return list.sort(
+      (a, b) => parseMinutes(a.responseTime) - parseMinutes(b.responseTime)
+    );
   }
 
   // Default: 'best_match' (Bayesian Feedback Ranking + Fair New Mentor Interleaving)
   return list.sort((a, b) => {
-    const scoreA = computeMentorScore(a);
-    const scoreB = computeMentorScore(b);
+    const scoreA = computeMentorScore(a, reviews, sessionRequests);
+    const scoreB = computeMentorScore(b, reviews, sessionRequests);
     return scoreB - scoreA;
   });
 }

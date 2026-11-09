@@ -10,6 +10,7 @@ import {
 import { Printer } from '@phosphor-icons/react';
 import { Logo } from './Logo';
 import { CERTIFICATE_MIN_HOURS } from '../lib/utils';
+import { getMentorStats } from '../lib/mentorStats';
 import { useApp } from '../context/AppContext';
 
 export function CertificateModal({
@@ -17,14 +18,14 @@ export function CertificateModal({
   open,
   onOpenChange,
 }) {
-  const { getMentorStats } = useApp();
+  const { reviews, sessionRequests } = useApp();
   if (!mentor) return null;
 
-  const stats = getMentorStats ? getMentorStats(mentor.id) : null;
-  const hours = stats?.hoursTaught !== undefined ? stats.hoursTaught : (mentor.hoursTaught || 0);
-  const studentsTaught = stats?.studentsTaught || Math.max(1, Math.round(hours * 0.7));
-  const sessionsCount = stats?.completedSessionsCount || Math.max(1, Math.round(hours * 0.9));
-  const rating = stats?.rating && stats.rating > 0 ? stats.rating : (mentor.rating || 4.9);
+  const stats = getMentorStats(mentor, reviews, sessionRequests);
+  const hours = stats.hoursTaught;
+  const studentsTaught = stats.studentsTaught || Math.max(1, Math.round(hours * 0.7));
+  const sessionsCount = stats.completedSessions || Math.max(1, Math.round(hours * 0.9));
+  const rating = stats.rating ?? 4.9;
 
   const isEligible = hours >= CERTIFICATE_MIN_HOURS;
   const hoursRemaining = Math.max(0, CERTIFICATE_MIN_HOURS - hours);
