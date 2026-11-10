@@ -148,7 +148,7 @@ export function AdminDashboard() {
             <span className="text-xs uppercase tracking-wider font-bold text-[var(--green-400)] block">
               University Administration Portal
             </span>
-            <h1 className="font-bold text-3xl sm:text-5xl text-white tracking-[-0.03em]">
+            <h1 className="font-bold text-3xl sm:text-5xl text-white tracking-[-0.03em] page-header-anim">
               Admin Control Center
             </h1>
             <p className="text-xs sm:text-sm text-[var(--gray-400)] max-w-xl">
@@ -167,7 +167,7 @@ export function AdminDashboard() {
         </div>
 
         {/* SECTION B: PLATFORM STATS in solid tiles */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 pt-8 mt-6 border-t border-white/10">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 pt-8 mt-6 border-t border-white/10 stagger-grid">
           <div className="p-4 rounded-[20px] bg-white/5 border border-white/10 text-center">
             <p className="font-bold text-3xl text-white">
               {stats.totalUsers}

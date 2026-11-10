@@ -19,6 +19,7 @@ import {
 import { SectionWrapper } from '../components/SectionWrapper';
 import { GlowSearchBar } from '../components/GlowSearchBar';
 import { AuthCard } from '../components/AuthCard';
+import { AnimatedText } from '../components/AnimatedText';
 import {
   Dialog,
   DialogContent,
@@ -34,7 +35,7 @@ import { rankMentors } from '../lib/ranking';
 // Visual Strip / Tiles
 function TileStrip() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full stagger-grid">
       {/* 1. Black Tile: Mentor mini card */}
       <div className="bg-[var(--ink)] text-white p-5 rounded-[28px] flex flex-col justify-between min-h-[170px]">
         <div className="flex items-center gap-3">
@@ -188,8 +189,9 @@ export function LandingPage() {
                 NED University of Engineering &amp; Technology
               </span>
 
-              <h1 className="font-bold text-[clamp(40px,7vw,84px)] text-[var(--ink)] leading-[1.02] tracking-[-0.03em] mb-6">
-                Learn from seniors who've been there.
+              <h1 className="font-bold text-[clamp(40px,7vw,84px)] text-[var(--ink)] leading-[1.02] tracking-[-0.03em] mb-6 page-header-anim">
+                Learn from seniors{' '}
+                <AnimatedText text="who've been there." />
               </h1>
 
               <p className="text-[var(--gray-600)] text-lg sm:text-xl leading-relaxed max-w-xl">
@@ -226,8 +228,9 @@ export function LandingPage() {
             NED University of Engineering &amp; Technology
           </span>
 
-          <h1 className="font-bold text-[clamp(44px,8vw,96px)] text-[var(--ink)] leading-[1.02] tracking-[-0.03em] mb-6 text-center">
-            Learn from seniors who've been there.
+          <h1 className="font-bold text-[clamp(44px,8vw,96px)] text-[var(--ink)] leading-[1.02] tracking-[-0.03em] mb-6 text-center page-header-anim">
+            Learn from seniors{' '}
+            <AnimatedText text="who've been there." />
           </h1>
 
           <p className="text-[var(--gray-600)] text-lg sm:text-xl leading-relaxed mb-8 max-w-2xl text-center">
@@ -256,7 +259,7 @@ export function LandingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger-grid">
           {[
             {
               num: 1,
@@ -359,7 +362,7 @@ export function LandingPage() {
         </div>
 
         <div className="bg-white border border-[var(--line)] rounded-[28px] overflow-hidden">
-          <div className="divide-y divide-[var(--line)]">
+          <div className="divide-y divide-[var(--line)] stagger-grid">
             {topMentors.map((m) => {
               const initials = m.name
                 .split(' ')
@@ -445,7 +448,7 @@ export function LandingPage() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center stagger-grid">
           {[
             { label: 'Active Mentors', val: mentors.length || 24 },
             { label: 'Sessions Completed', val: stats?.completedSessions || 142 },
@@ -473,7 +476,7 @@ export function LandingPage() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 stagger-grid">
           {/* Tile 1: 7 cols */}
           <div className="md:col-span-7 bg-[var(--snow)] border border-[var(--line)] rounded-[28px] p-8 flex flex-col justify-between">
             <div className="size-10 rounded-full bg-[var(--green-900)] text-white flex items-center justify-center mb-6">
@@ -643,7 +646,7 @@ export function LandingPage() {
           </h2>
         </div>
 
-        <div className="max-w-3xl mx-auto divide-y divide-[var(--line)] bg-white border border-[var(--line)] rounded-[28px] p-6 sm:p-8">
+        <div className="max-w-3xl mx-auto divide-y divide-[var(--line)] bg-white border border-[var(--line)] rounded-[28px] p-6 sm:p-8 stagger-grid">
           {faqs.map((faq, index) => {
             const isOpen = openFaq === index;
             return (

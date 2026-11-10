@@ -188,7 +188,7 @@ export function MentorDashboard() {
                 </span>
                 <span className="text-xs text-[var(--gray-400)]">Year {mentor.year}</span>
               </div>
-              <h1 className="font-bold text-2xl sm:text-4xl text-white tracking-[-0.03em]">
+              <h1 className="font-bold text-2xl sm:text-4xl text-white tracking-[-0.03em] page-header-anim">
                 Welcome back, {mentor.name}
               </h1>
               <p className="text-xs sm:text-sm text-[var(--gray-400)]">
@@ -214,7 +214,7 @@ export function MentorDashboard() {
         </div>
 
         {/* 4 Stats in solid tiles */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 mt-6 border-t border-white/10 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 mt-6 border-t border-white/10 text-center stagger-grid">
           <div className="p-5 rounded-[28px] bg-white/5 border border-white/10">
             <p className="font-bold text-3xl text-white">
               {pendingRequests.length}

@@ -180,7 +180,7 @@ export function MentorDetailPage() {
                 )}
               </div>
 
-              <h1 className="font-bold text-3xl sm:text-5xl text-white tracking-[-0.03em]">
+              <h1 className="font-bold text-3xl sm:text-5xl text-white tracking-[-0.03em] page-header-anim">
                 {mentor.name}
               </h1>
 
@@ -215,7 +215,7 @@ export function MentorDetailPage() {
 
       {/* 2. STATS STRIP (Light Band, plain numbers with vertical hairlines) */}
       <SectionWrapper variant="light" containerClassName="py-10">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x divide-[var(--line)]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x divide-[var(--line)] stagger-grid">
           <div className="pt-2 sm:pt-0">
             <p className="font-bold text-4xl text-[var(--ink)]">{mentorStats.studentsTaught}</p>
             <p className="text-xs uppercase tracking-wider font-semibold text-[var(--gray-600)] mt-1">Students Guided</p>

@@ -214,8 +214,8 @@ export function MentorsListPage() {
               type="button"
               onClick={() => setSelectedYear(yr)}
               className={`py-2 rounded-full text-center border font-semibold transition-colors ${selectedYear === yr
-                  ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
-                  : 'bg-white border-[var(--line)] text-[var(--gray-600)] hover:bg-[var(--snow)]'
+                ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
+                : 'bg-white border-[var(--line)] text-[var(--gray-600)] hover:bg-[var(--snow)]'
                 }`}
             >
               {yr === 'all' ? 'All' : `Yr ${yr}`}
@@ -238,8 +238,8 @@ export function MentorsListPage() {
               type="button"
               onClick={() => setMinRating(r.val)}
               className={`py-2 rounded-full text-center border font-semibold transition-colors ${minRating === r.val
-                  ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
-                  : 'bg-white border-[var(--line)] text-[var(--gray-600)] hover:bg-[var(--snow)]'
+                ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
+                : 'bg-white border-[var(--line)] text-[var(--gray-600)] hover:bg-[var(--snow)]'
                 }`}
             >
               {r.label}
@@ -288,7 +288,7 @@ export function MentorsListPage() {
             NED University Peer Mentors
           </span>
 
-          <h1 className="font-bold text-4xl sm:text-6xl text-white tracking-[-0.03em] leading-tight">
+          <h1 className="font-bold text-4xl sm:text-6xl text-white tracking-[-0.03em] leading-tight page-header-anim">
             Find your mentor
           </h1>
 
@@ -317,8 +317,8 @@ export function MentorsListPage() {
                   type="button"
                   onClick={() => handleQuickSubjectClick(subjName)}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isSelected
-                      ? 'bg-[var(--green-400)] text-[var(--ink)] border-[var(--green-400)]'
-                      : 'bg-[#181818] text-white border-white/10 hover:border-white/30'
+                    ? 'bg-[var(--green-400)] text-[var(--ink)] border-[var(--green-400)]'
+                    : 'bg-[#181818] text-white border-white/10 hover:border-white/30'
                     }`}
                 >
                   {subjName}
@@ -400,7 +400,7 @@ export function MentorsListPage() {
 
             {/* MENTOR LISTING: ROW/LIST LAYOUT */}
             {filteredMentors.length > 0 ? (
-              <div className="bg-white border border-[var(--line)] rounded-[28px] overflow-hidden divide-y divide-[var(--line)]">
+              <div className="bg-white border border-[var(--line)] rounded-[28px] overflow-hidden divide-y divide-[var(--line)] stagger-grid">
                 {filteredMentors.map((m) => {
                   const initials = m.name.split(' ').map((n) => n[0]).join('').slice(0, 2);
                   const stats = getMentorStats(m, reviews, sessionRequests);

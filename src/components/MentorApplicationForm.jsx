@@ -261,10 +261,10 @@ export function MentorApplicationForm() {
   if (!currentUser) {
     return (
       <div className="text-center py-10 px-4 max-w-lg mx-auto space-y-4">
-        <h2 className="font-heading font-semibold text-2xl text-[#11203A]">
+        <h2 className="font-heading font-semibold text-2xl text-[var(--ink)] page-header-anim">
           Sign in to apply as a mentor
         </h2>
-        <p className="text-sm text-[#11203A]/70 leading-relaxed">
+        <p className="text-sm text-[var(--gray-600)] leading-relaxed">
           Mentor applications require a verified student account. Sign in with your NED university email or create an account to begin.
         </p>
         <button
@@ -272,8 +272,9 @@ export function MentorApplicationForm() {
           onClick={() => {
             const tabsTrigger = document.querySelector('[value="login"]');
             if (tabsTrigger) tabsTrigger.click();
+            else navigate('/auth');
           }}
-          className="px-6 py-2.5 rounded-[6px] bg-[#0F2240] text-[#F7F4EE] hover:bg-[#1F3C6B] text-xs font-semibold cursor-pointer"
+          className="px-6 py-2.5 rounded-full bg-[var(--ink)] text-[var(--white)] hover:bg-[var(--green-900)] text-xs font-semibold cursor-pointer"
         >
           Log in or sign up first
         </button>
@@ -285,20 +286,20 @@ export function MentorApplicationForm() {
   if (currentStatus === 'pending') {
     return (
       <div className="max-w-2xl mx-auto py-8 px-4 text-center space-y-4">
-        <span className="text-xs font-bold uppercase tracking-wider text-[#A86F10] block">
+        <span className="text-xs font-bold uppercase tracking-wider text-[var(--green-600)] block">
           Status: Pending Review
         </span>
 
-        <h2 className="font-heading font-semibold text-2xl sm:text-3xl text-[#11203A]">
+        <h2 className="font-heading font-semibold text-2xl sm:text-3xl text-[var(--ink)] page-header-anim">
           Your mentor application is under review
         </h2>
 
-        <p className="text-sm text-[#11203A]/75 max-w-lg mx-auto leading-relaxed">
-          Thank you for volunteering, <strong className="text-[#11203A]">{currentUser.name}</strong>. University administrators review applications to verify GPA eligibility and departmental alignment.
+        <p className="text-sm text-[var(--gray-600)] max-w-lg mx-auto leading-relaxed">
+          Thank you for volunteering, <strong className="text-[var(--ink)]">{currentUser.name}</strong>. University administrators review applications to verify GPA eligibility and departmental alignment.
         </p>
 
         {/* Numbered Stepper Tracker */}
-        <div className="grid grid-cols-3 gap-3 p-4 rounded-[20px] border border-[var(--line)] bg-[var(--snow)] max-w-lg mx-auto text-xs my-4">
+        <div className="grid grid-cols-3 gap-3 p-4 rounded-[20px] border border-[var(--line)] bg-[var(--snow)] max-w-lg mx-auto text-xs my-4 stagger-grid">
           <div className="flex flex-col items-center">
             <span className="size-8 rounded-full bg-[var(--green-600)] text-[var(--white)] font-bold text-xs flex items-center justify-center mb-1">
               <Check className="size-4" weight="bold" />
@@ -337,7 +338,7 @@ export function MentorApplicationForm() {
             onClick={() => {
               toast.info('Tip: Switch to the Admin demo account to approve this profile.');
             }}
-            className="px-6 py-2.5 rounded-full bg-[var(--ink)] hover:bg-[#222222] text-[var(--white)] text-xs font-semibold cursor-pointer"
+            className="px-6 py-2.5 rounded-full bg-[var(--ink)] hover:bg-[var(--green-900)] text-[var(--white)] text-xs font-semibold cursor-pointer"
           >
             How does review work?
           </button>
@@ -350,15 +351,15 @@ export function MentorApplicationForm() {
   if (currentStatus === 'approved') {
     return (
       <div className="max-w-2xl mx-auto py-8 px-4 text-center space-y-4">
-        <span className="text-xs font-bold uppercase tracking-wider text-[#5E9680] block">
+        <span className="text-xs font-bold uppercase tracking-wider text-[var(--green-600)] block">
           Approved &amp; Active Mentor
         </span>
 
-        <h2 className="font-heading font-semibold text-2xl sm:text-3xl text-[#11203A]">
+        <h2 className="font-heading font-semibold text-2xl sm:text-3xl text-[var(--ink)] page-header-anim">
           You are an official Skill Share mentor
         </h2>
 
-        <p className="text-sm text-[#11203A]/75 max-w-lg mx-auto leading-relaxed">
+        <p className="text-sm text-[var(--gray-600)] max-w-lg mx-auto leading-relaxed">
           Your profile is active in the NED mentor directory. Juniors can now request 1-on-1 virtual sessions with you.
         </p>
 
@@ -366,14 +367,14 @@ export function MentorApplicationForm() {
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
-            className="px-6 py-2.5 rounded-[6px] bg-[#0F2240] hover:bg-[#1F3C6B] text-[#F7F4EE] text-xs font-semibold"
+            className="px-6 py-2.5 rounded-full bg-[var(--ink)] hover:bg-[var(--green-900)] text-[var(--white)] text-xs font-semibold"
           >
             Go to Mentor Dashboard
           </button>
           <button
             type="button"
             onClick={() => navigate('/mentors')}
-            className="px-5 py-2.5 rounded-[6px] border border-[#11203A]/20 bg-[#F7F4EE] hover:bg-[#EDE8DD] text-xs font-semibold text-[#11203A]"
+            className="px-5 py-2.5 rounded-full border border-[var(--line)] bg-[var(--snow)] hover:bg-[var(--line)] text-xs font-semibold text-[var(--ink)]"
           >
             View in Directory
           </button>
@@ -386,17 +387,17 @@ export function MentorApplicationForm() {
   if (currentStatus === 'rejected') {
     return (
       <div className="max-w-2xl mx-auto py-8 px-4 text-center space-y-4">
-        <span className="text-xs font-bold uppercase tracking-wider text-[#B9503A] block">
+        <span className="text-xs font-bold uppercase tracking-wider text-[var(--error)] block">
           Application Not Approved
         </span>
 
-        <h2 className="font-heading font-semibold text-2xl text-[#11203A]">
+        <h2 className="font-heading font-semibold text-2xl text-[var(--ink)] page-header-anim">
           Application needs revision
         </h2>
 
-        <div className="p-4 rounded-[6px] border border-[#11203A]/15 bg-[#EDE8DD] max-w-md mx-auto text-left text-xs">
-          <p className="text-[#11203A]/60 uppercase font-bold text-[10px] mb-1">Admin Feedback:</p>
-          <p className="text-[#11203A] leading-relaxed">
+        <div className="p-4 rounded-[14px] border border-[var(--line)] bg-[var(--snow)] max-w-md mx-auto text-left text-xs">
+          <p className="text-[var(--gray-600)] uppercase font-bold text-[10px] mb-1">Admin Feedback:</p>
+          <p className="text-[var(--ink)] leading-relaxed">
             {mentorRecord?.rejectReason || 'Please verify minimum GPA eligibility (3.0) and specify weekly availability.'}
           </p>
         </div>
@@ -407,7 +408,7 @@ export function MentorApplicationForm() {
             resetMentorApplication(mentorRecord?.id);
             toast.info('Application form reopened for editing.');
           }}
-          className="px-6 py-2.5 rounded-[6px] bg-[#0F2240] hover:bg-[#1F3C6B] text-[#F7F4EE] text-xs font-semibold"
+          className="px-6 py-2.5 rounded-full bg-[var(--ink)] hover:bg-[var(--green-900)] text-[var(--white)] text-xs font-semibold"
         >
           Re-apply with Updates
         </button>
@@ -418,12 +419,12 @@ export function MentorApplicationForm() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* Top Header with Draft Status & Stepper */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#11203A]/15">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[var(--line)]">
         <div>
-          <h2 className="font-heading font-semibold text-xl sm:text-2xl text-[#11203A] tracking-tight">
+          <h2 className="font-heading font-semibold text-xl sm:text-2xl text-[var(--ink)] tracking-tight page-header-anim">
             Mentor Application
           </h2>
-          <p className="text-xs text-[#11203A]/70">
+          <p className="text-xs text-[var(--gray-600)]">
             Join the senior volunteer cohort. Minimum 3.0 CGPA required.
           </p>
         </div>
@@ -465,21 +466,19 @@ export function MentorApplicationForm() {
                 if (item.step < currentStep) setCurrentStep(item.step);
               }}
               disabled={item.step > currentStep}
-              className={`flex items-center gap-2.5 p-2 rounded-full border text-left transition-colors ${
-                isCurrent
+              className={`flex items-center gap-2.5 p-2 rounded-full border text-left transition-colors ${isCurrent
                   ? 'border-[var(--ink)] bg-[var(--ink)] text-[var(--white)]'
                   : isDone
-                  ? 'border-[var(--green-600)] bg-[var(--mint)] text-[var(--green-900)] cursor-pointer'
-                  : 'border-[var(--line)] bg-[var(--snow)] text-[var(--gray-400)] cursor-not-allowed'
-              }`}
+                    ? 'border-[var(--green-600)] bg-[var(--mint)] text-[var(--green-900)] cursor-pointer'
+                    : 'border-[var(--line)] bg-[var(--snow)] text-[var(--gray-400)] cursor-not-allowed'
+                }`}
             >
-              <span className={`size-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                isCurrent
+              <span className={`size-7 rounded-full flex items-center justify-center text-xs font-bold ${isCurrent
                   ? 'bg-[var(--white)] text-[var(--ink)]'
                   : isDone
-                  ? 'bg-[var(--green-600)] text-[var(--white)]'
-                  : 'bg-[var(--line)] text-[var(--gray-600)]'
-              }`}>
+                    ? 'bg-[var(--green-600)] text-[var(--white)]'
+                    : 'bg-[var(--line)] text-[var(--gray-600)]'
+                }`}>
                 {isDone ? <Check className="size-3.5" weight="bold" /> : item.step}
               </span>
               <span className="text-xs font-semibold hidden sm:inline">{item.label}</span>
@@ -612,11 +611,10 @@ export function MentorApplicationForm() {
                 />
 
                 <div
-                  className={`px-3 py-2 rounded-[6px] text-xs font-bold border ${
-                    isGpaEligible
+                  className={`px-3 py-2 rounded-[6px] text-xs font-bold border ${isGpaEligible
                       ? 'bg-[#5E9680]/15 border-[#5E9680] text-[#5E9680]'
                       : 'bg-[#B9503A]/15 border-[#B9503A] text-[#B9503A]'
-                  }`}
+                    }`}
                 >
                   {isGpaEligible ? 'Eligible (≥ 3.0)' : 'Minimum 3.0 required'}
                 </div>
@@ -649,11 +647,10 @@ export function MentorApplicationForm() {
                       key={subj}
                       type="button"
                       onClick={() => toggleSubject(subj)}
-                      className={`px-3 py-1.5 rounded-[6px] text-xs font-medium border transition-colors cursor-pointer ${
-                        isSelected
+                      className={`px-3 py-1.5 rounded-[6px] text-xs font-medium border transition-colors cursor-pointer ${isSelected
                           ? 'bg-[#0F2240] text-[#F7F4EE] border-[#0F2240] font-semibold'
                           : 'bg-white border-[#11203A]/20 text-[#11203A] hover:bg-[#EDE8DD]'
-                      }`}
+                        }`}
                     >
                       {subj}
                     </button>
@@ -723,11 +720,10 @@ export function MentorApplicationForm() {
                               <button
                                 type="button"
                                 onClick={() => toggleSlot(day, slot)}
-                                className={`w-full py-1 px-2 rounded-[4px] text-[11px] font-semibold border transition-colors ${
-                                  isChecked
+                                className={`w-full py-1 px-2 rounded-[4px] text-[11px] font-semibold border transition-colors ${isChecked
                                     ? 'bg-[#0F2240] text-[#F7F4EE] border-[#0F2240]'
                                     : 'bg-[#EDE8DD]/50 border-transparent text-[#11203A]/50 hover:bg-[#EDE8DD]'
-                                }`}
+                                  }`}
                               >
                                 {isChecked ? 'Free' : '-'}
                               </button>

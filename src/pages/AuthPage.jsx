@@ -39,7 +39,7 @@ export function AuthPage() {
               <span className="text-xs font-bold uppercase tracking-widest text-[var(--green-600)] block mb-2">
                 NED Campus Community
               </span>
-              <h1 className="font-heading font-bold text-3xl sm:text-4xl text-[var(--ink)] tracking-tight">
+              <h1 className="font-heading font-bold text-3xl sm:text-4xl text-[var(--ink)] tracking-tight page-header-anim">
                 Peer learning made simple and official.
               </h1>
               <p className="text-sm text-[var(--gray-600)] mt-2 leading-relaxed">

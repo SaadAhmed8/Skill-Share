@@ -150,7 +150,7 @@ export function SessionsPage() {
             <span className="text-xs uppercase tracking-wider font-bold text-[var(--green-400)] block mb-1">
               {isMentorRole ? 'Mentor Session Workspace' : 'Student Consultations'}
             </span>
-            <h1 className="font-bold text-3xl sm:text-5xl text-white tracking-[-0.03em]">
+            <h1 className="font-bold text-3xl sm:text-5xl text-white tracking-[-0.03em] page-header-anim">
               My Sessions
             </h1>
             <p className="text-xs sm:text-sm text-[var(--gray-400)] mt-1 max-w-xl">
@@ -170,7 +170,7 @@ export function SessionsPage() {
         </div>
 
         {/* 3 Stats in tiles */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10 stagger-grid">
           <div className="p-5 rounded-[28px] bg-white/5 border border-white/10 text-center">
             <p className="font-bold text-4xl text-white">
               {pendingSessions.length}
