@@ -20,6 +20,7 @@ import { SectionWrapper } from '../components/SectionWrapper';
 import { GlowSearchBar } from '../components/GlowSearchBar';
 import { AuthCard } from '../components/AuthCard';
 import { AnimatedText } from '../components/AnimatedText';
+import { HeroFeatureSlider } from '../components/HeroFeatureSlider';
 import {
   Dialog,
   DialogContent,
@@ -204,9 +205,10 @@ export function LandingPage() {
             </div>
           </div>
 
-          {/* Visual Strip Below */}
+          {/* Visual Strip & Feature Slides Below */}
           <div className="mt-8">
-            <p className="text-xs uppercase tracking-wider font-bold text-[var(--gray-600)] mb-4">
+            <HeroFeatureSlider />
+            <p className="text-xs uppercase tracking-wider font-bold text-[var(--gray-600)] mb-4 mt-8">
               Inside Skill Share
             </p>
             <TileStrip />
@@ -237,9 +239,11 @@ export function LandingPage() {
             Connect 1-on-1 with verified NED seniors for patient explanations in engineering fundamentals, programming, calculus, and circuit analysis.
           </p>
 
-          <div className="w-full max-w-2xl mb-12">
+          <div className="w-full max-w-2xl mb-8">
             <GlowSearchBar placeholder="Search a subject: Programming, Calculus, Circuits..." />
           </div>
+
+          <HeroFeatureSlider />
 
           <TileStrip />
         </div>
