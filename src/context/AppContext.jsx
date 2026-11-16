@@ -496,21 +496,29 @@ export function AppProvider({ children }) {
   const createSessionRequest = (requestData) => {
     if (!currentUser) throw new Error('Must be logged in to request a session.');
 
+    const mentorObj = mentors.find((m) => m.id === requestData.mentorId);
+
+    if (currentUser.id === mentorObj?.userId || currentUser.email === mentorObj?.email) {
+      throw new Error(
+        'You cannot request a session with yourself. Please log in with a student account to test session booking.'
+      );
+    }
+
+    // Only block if there is already an active pending request for the EXACT SAME time slot and subject
     const duplicate = sessionRequests.find(
       (req) =>
         req.studentId === currentUser.id &&
         req.mentorId === requestData.mentorId &&
         req.subject === requestData.subject &&
+        req.preferredSlot === requestData.preferredSlot &&
         req.status === 'requested'
     );
 
     if (duplicate) {
       throw new Error(
-        `You already have an active request with this mentor for ${requestData.subject}. Check 'My Sessions' to view status.`
+        `You already have an active request for ${requestData.preferredSlot} (${requestData.subject}). Check 'My Sessions' to view status.`
       );
     }
-
-    const mentorObj = mentors.find((m) => m.id === requestData.mentorId);
 
     const initialMsg = {
       id: `msg-${Date.now()}`,

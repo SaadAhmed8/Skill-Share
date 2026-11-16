@@ -45,12 +45,25 @@ export function RequestSessionDialog({
     }
   }, [mentor, initialSlot]);
 
+  const isSelfBooking = Boolean(
+    currentUser &&
+      mentor &&
+      (currentUser.id === mentor.userId || currentUser.email === mentor.email)
+  );
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
 
     if (!currentUser) {
       setError('Please log in with your NED student account first.');
+      return;
+    }
+
+    if (isSelfBooking) {
+      setError(
+        'You cannot request a mentoring session with yourself. Please switch to a student account (e.g. zainab.cs@neduet.edu.pk).'
+      );
       return;
     }
 
@@ -64,21 +77,25 @@ export function RequestSessionDialog({
       return;
     }
 
-    createSessionRequest({
-      mentorId: mentor.id,
-      studentId: currentUser.id,
-      studentName: currentUser.name,
-      studentEmail: currentUser.email,
-      mentorName: mentor.name,
-      mentorEmail: mentor.email,
-      subject,
-      preferredSlot,
-      durationMinutes,
-      description: description.trim(),
-      isGroupSession,
-    });
+    try {
+      createSessionRequest({
+        mentorId: mentor.id,
+        studentId: currentUser.id,
+        studentName: currentUser.name,
+        studentEmail: currentUser.email,
+        mentorName: mentor.name,
+        mentorEmail: mentor.email,
+        subject,
+        preferredSlot,
+        durationMinutes,
+        description: description.trim(),
+        isGroupSession,
+      });
 
-    setIsSuccess(true);
+      setIsSuccess(true);
+    } catch (err) {
+      setError(err?.message || 'Failed to submit session request. Please try again.');
+    }
   };
 
   const handleOpenChange = (isOpen) => {
