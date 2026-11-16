@@ -11,6 +11,7 @@ import {
   Star,
   CheckCircle,
   Certificate,
+  DownloadSimple,
 } from '@phosphor-icons/react';
 import { SectionWrapper } from '../components/SectionWrapper';
 import { RequestSessionDialog } from '../components/RequestSessionDialog';
@@ -122,15 +123,15 @@ export function MentorDetailPage() {
           </nav>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Certificate button: shown on the mentor's own profile (mentor only) */}
+            {/* Certificate download button: shown on the mentor's own profile (mentor only) */}
             {currentUser?.id === mentor.userId && currentUser?.role === 'mentor' && (
               <button
                 type="button"
                 onClick={() => setCertModalOpen(true)}
                 className="px-3.5 py-1.5 rounded-full border border-[var(--green-600)] bg-[var(--green-900)] text-white hover:bg-black text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
               >
-                <Certificate className="size-3.5" weight="bold" />
-                <span>Certificate</span>
+                <DownloadSimple className="size-3.5" weight="bold" />
+                <span>Download Certificate</span>
               </button>
             )}
 

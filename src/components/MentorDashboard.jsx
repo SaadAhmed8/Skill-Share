@@ -9,6 +9,7 @@ import {
   Star,
   Users,
   Certificate,
+  DownloadSimple,
 } from '@phosphor-icons/react';
 import { SectionWrapper } from './SectionWrapper';
 import { SessionCard } from './SessionCard';
@@ -434,8 +435,8 @@ export function MentorDashboard() {
             onClick={() => setCertModalOpen(true)}
             className="px-6 py-2.5 rounded-full text-xs font-bold cursor-pointer bg-[var(--green-400)] text-[var(--ink)] hover:bg-white transition-colors flex items-center gap-2"
           >
-            <Certificate className="size-4" weight="bold" />
-            <span>Volunteer Certificate</span>
+            <DownloadSimple className="size-4" weight="bold" />
+            <span>Download Certificate</span>
           </button>
         </div>
 

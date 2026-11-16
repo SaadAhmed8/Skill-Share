@@ -1,5 +1,5 @@
 // src/components/CertificateModal.jsx
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,11 +7,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from './ui/dialog';
-import { Printer } from '@phosphor-icons/react';
+import { DownloadSimple, Printer, SpinnerGap } from '@phosphor-icons/react';
 import { Logo } from './Logo';
 import { CERTIFICATE_MIN_HOURS } from '../lib/utils';
 import { getMentorStats } from '../lib/mentorStats';
 import { useApp } from '../context/AppContext';
+import { toast } from 'sonner';
 
 export function CertificateModal({
   mentor,
@@ -19,6 +20,9 @@ export function CertificateModal({
   onOpenChange,
 }) {
   const { reviews, sessionRequests } = useApp();
+  const certRef = useRef(null);
+  const [downloading, setDownloading] = useState(false);
+
   if (!mentor) return null;
 
   const stats = getMentorStats(mentor, reviews, sessionRequests);
@@ -45,10 +49,6 @@ export function CertificateModal({
     sealCenterText = "60+ HOURS";
   }
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const currentDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -60,6 +60,55 @@ export function CertificateModal({
     : 'Engineering Fundamentals';
 
   const certId = `SKL-2026-${mentor.id.toUpperCase()}-${hours}`;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!certRef.current) return;
+    setDownloading(true);
+    const toastId = toast.loading('Generating high-resolution PDF certificate...');
+
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+
+      const element = certRef.current;
+
+      // Render at 2x scale for sharp vector/text printing quality
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#FFFFFF',
+        windowWidth: 1040,
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+      // Create landscape A4 PDF (297mm x 210mm)
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+        compress: true,
+      });
+
+      // Fit exactly across the A4 landscape canvas
+      pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210, undefined, 'FAST');
+      const cleanFileName = `Certificate-${mentor.name.replace(/[^a-zA-Z0-9]/g, '_')}-${hours}h.pdf`;
+      pdf.save(cleanFileName);
+
+      toast.success('Certificate PDF downloaded successfully!', { id: toastId });
+    } catch (err) {
+      console.error('Failed to generate PDF certificate:', err);
+      toast.error('Could not generate PDF directly. Opening print dialog...', { id: toastId });
+      window.print();
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -123,6 +172,7 @@ export function CertificateModal({
             {/* PRINTABLE CERTIFICATE CONTAINER (Landscape A4: 297:210, width min(100%, 1040px)) */}
             <div className="w-full flex justify-center py-2 overflow-x-auto">
               <div
+                ref={certRef}
                 className="print-certificate bg-white text-[var(--ink)] p-5 sm:p-8 md:p-10 relative flex flex-col justify-between text-center"
                 style={{
                   aspectRatio: '297 / 210',
@@ -302,8 +352,8 @@ export function CertificateModal({
               </div>
             </div>
 
-            {/* Action Buttons: Print or save as PDF, Close */}
-            <div className="no-print flex justify-end items-center gap-3 pt-3 border-t border-[var(--line)]">
+            {/* Action Buttons: Download PDF, Print, Close */}
+            <div className="no-print flex flex-wrap justify-end items-center gap-2.5 pt-3 border-t border-[var(--line)]">
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
@@ -314,10 +364,28 @@ export function CertificateModal({
               <button
                 type="button"
                 onClick={handlePrint}
-                className="px-6 py-2 rounded-full bg-[var(--ink)] text-white hover:bg-[var(--green-900)] text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors"
+                className="px-5 py-2 rounded-full border border-[var(--line)] bg-white hover:bg-[var(--snow)] text-[var(--ink)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 <Printer weight="bold" className="size-4" />
-                <span>Print or save as PDF</span>
+                <span>Print</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadPDF}
+                disabled={downloading}
+                className="px-6 py-2.5 rounded-full bg-[var(--green-900)] text-white hover:bg-black text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-60"
+              >
+                {downloading ? (
+                  <>
+                    <SpinnerGap className="size-4 animate-spin" />
+                    <span>Preparing PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <DownloadSimple weight="bold" className="size-4" />
+                    <span>Download PDF</span>
+                  </>
+                )}
               </button>
             </div>
           </>
