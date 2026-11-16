@@ -16,7 +16,7 @@ import { getMentorStats as computeMentorStats } from '../lib/mentorStats';
 
 const AppContext = createContext(null);
 
-const DATA_VERSION = 'v4_mentor_stats_unified';
+const DATA_VERSION = 'v5_khadija_mentor_account';
 
 const STORAGE_KEYS = {
   DATA_VERSION: 'skillshare_data_version',
@@ -102,7 +102,21 @@ export function AppProvider({ children }) {
   });
 
   const [users, setUsers] = useState(() => {
+    const savedVersion = localStorage.getItem(STORAGE_KEYS.DATA_VERSION);
     const saved = localStorage.getItem(STORAGE_KEYS.USERS);
+    if (savedVersion !== DATA_VERSION) {
+      let existing = [];
+      if (saved) {
+        try {
+          existing = JSON.parse(saved);
+        } catch (e) { }
+      }
+      const initialIds = new Set(initialUsers.map((u) => u.id));
+      const userAdded = existing.filter((u) => !initialIds.has(u.id));
+      const merged = [...initialUsers, ...userAdded];
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(merged));
+      return merged;
+    }
     return saved ? JSON.parse(saved) : initialUsers;
   });
 

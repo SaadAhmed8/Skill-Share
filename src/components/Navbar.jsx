@@ -152,7 +152,7 @@ export function Navbar() {
                       <div className="px-3 py-1 text-[10px] text-[var(--gray-600)] uppercase font-bold">
                         Switch Demo Role
                       </div>
-                      {users.slice(0, 3).map((u) => (
+                      {users.map((u) => (
                         <button
                           key={u.id}
                           type="button"

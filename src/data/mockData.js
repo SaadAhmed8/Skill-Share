@@ -49,6 +49,16 @@ export const initialUsers = [
     year: 3,
     department: "Software Engineering",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "m5",
+    name: "Khadija Noor",
+    email: "khadija.cs@neduet.edu.pk",
+    phone: "+92 307 8887766",
+    role: "mentor",
+    year: 4,
+    department: "Computer Science",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
   }
 ];
 
