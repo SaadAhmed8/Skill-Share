@@ -236,6 +236,7 @@ export function SessionsPage() {
                   <SessionCard
                     key={session.id}
                     session={session}
+                    isMentor={isMentorRole}
                     onOpenThread={handleOpenThread}
                     onAccept={handleAcceptClick}
                     onDecline={handleDeclineClick}
@@ -259,6 +260,7 @@ export function SessionsPage() {
                   <SessionCard
                     key={session.id}
                     session={session}
+                    isMentor={isMentorRole}
                     onOpenThread={handleOpenThread}
                     onReschedule={handleRescheduleClick}
                     onCancel={handleCancelClick}
@@ -302,6 +304,7 @@ export function SessionsPage() {
                   <SessionCard
                     key={session.id}
                     session={session}
+                    isMentor={isMentorRole}
                     onOpenThread={handleOpenThread}
                   />
                 ))}
